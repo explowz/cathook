@@ -100,7 +100,7 @@ float getLatency()
 
     // Clamp and apply rampup, also ensure we do not go out of the 1000.0f bounds
     float backtrack_latency = latency_rampup * std::clamp(*latency, 0.0f, 900.0f - real_latency);
-
+    
     return backtrack_latency;
 }
 

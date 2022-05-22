@@ -1275,7 +1275,7 @@ bool GetProjectileData(CachedEntity *weapon, float &speed, float &gravity, float
 {
     float rspeed, rgrav, rinitial_vel;
 
-    IF_GAME(!IsTF()) return false;
+    
 
     if (CE_BAD(weapon))
         return false;
@@ -1540,7 +1540,6 @@ bool IsSentryBuster(CachedEntity *entity)
 
 bool IsAmbassador(CachedEntity *entity)
 {
-    IF_GAME(!IsTF2()) return false;
     if (entity->m_iClassID() != CL_CLASS(CTFRevolver))
         return false;
     const int &defidx = CE_INT(entity, netvar.iItemDefinitionIndex);
