@@ -329,7 +329,7 @@ static void CreateMove()
     bool should_zoom = *auto_zoom;
 
     switch(get_weapon_mode){
-        case weapon_hitscan:
+        case weapon_hitscan:{
             if(should_zoom)
              doAutoZoom(false);
             if(should_backtrack)
@@ -337,12 +337,27 @@ static void CreateMove()
             CachedEntity *target_entity = target_last = RetrieveBestTarget(aimkey_status);
             if(small_box_checker(target_entity)){
                     int weapon_case = g_pLocalPlayer->weapon()->m_iClassID();
-                    hitscan_special_cases(target_entity, weapon_case);
+                    Aim(target_entity);
+                    if(!hitscan_special_cases(target_entity, weapon_case))
+                        DoAutoshoot();
+            }
+        
+        break; 
+        }
+        case weapon_melee:{
+        CachedEntity *target_entity = target_last = RetrieveBestTarget(aimkey_status);    
+        DoAutoshoot();
+            if (g_pLocalPlayer->weapon_melee_damage_tick){
+                 if(should_backtrack)
+                    updateShouldBacktrack(); 
+                
+                if(small_box_checker(target_entity))
                     Aim(target_entity);
             }
-        break;     
+        break; 
+        }   
         case weapon_projectile:
-        case weapon_throwable:
+        case weapon_throwable:{
         if (projectile_aimbot){
              projectileAimbotRequired=true;
              projectile_mode = GetProjectileData(g_pLocalPlayer->weapon(), cur_proj_speed, cur_proj_grav, cur_proj_start_vel);
@@ -360,21 +375,14 @@ static void CreateMove()
              CachedEntity *target_entity = target_last = RetrieveBestTarget(aimkey_status);
                  if(small_box_checker(target_entity)){
                     int weapon_case = g_pLocalPlayer->weapon()->m_iClassID();
-                    projectile_special_cases(target_entity, weapon_case);
-                    Aim(target_entity);
+                    if(projectile_special_cases(target_entity, weapon_case)){
+                        Aim(target_entity);
+                        DoAutoshoot();
+                    }
                  }
         }
         break;
-        case weapon_melee:
-        DoAutoshoot();
-            if (g_pLocalPlayer->weapon_melee_damage_tick){
-                 if(should_backtrack)
-                    updateShouldBacktrack(); 
-                CachedEntity *target_entity = target_last = RetrieveBestTarget(aimkey_status);
-                if(small_box_checker(target_entity))
-                    Aim(target_entity);
-            }
-        break;
+        }
 
 
 
@@ -385,13 +393,100 @@ static void CreateMove()
 }
 bool projectile_special_cases(CachedEntity* target_entity, int weapon_case){
 
+switch(weapon_case)
+{
+    case CL_CLASS(CTFCompoundBow):{
+            bool release = false;
+            if (autoshoot)
+                current_user_cmd->buttons |= IN_ATTACK;
+            // Grab time when charge began
+            float begincharge = CE_FLOAT(g_pLocalPlayer->weapon(), netvar.flChargeBeginTime);
+            float charge      = g_GlobalVars->curtime - begincharge;
+            if (!begincharge)
+                charge = 0.0f;
+            int damage        = std::floor(50.0f + 70.0f * fminf(1.0f, charge));
+            int charge_damage = std::floor(50.0f + 70.0f * fminf(1.0f, charge)) * 3.0f;
+            if (HasCondition<TFCond_Slowed>(LOCAL_E) && (autoshoot || !(current_user_cmd->buttons & IN_ATTACK)) && (!wait_for_charge || (charge >= 1.0f || damage >= target_entity->m_iHealth() || charge_damage >= target_entity->m_iHealth())))
+                release = true;
+            return release;
+            break;
+            }
+    case CL_CLASS(CTFCannon):{
+            bool release = false;
+            if (autoshoot)
+                current_user_cmd->buttons |= IN_ATTACK;
+            float detonate_time = CE_FLOAT(LOCAL_W, netvar.flDetonateTime);
+            // Currently charging up
+            if (detonate_time > g_GlobalVars->curtime)
+            {
+                if (wait_for_charge)
+                {
+                    // Shoot when a straight shot would result in only 100ms left on fuse upon target hit
+                    float best_charge = PredictEntity(target_entity, false).DistTo(g_pLocalPlayer->v_Eye) / cur_proj_speed + 0.1;
+                    if (detonate_time - g_GlobalVars->curtime <= best_charge)
+                        release = true;
+                }
+                else
+                    release = true;
+            }
+            return release;
+            break;
+    }
+    case CL_CLASS(CTFPipebombLauncher):{
+            float chargebegin = CE_FLOAT(LOCAL_W, netvar.flChargeBeginTime);
+            float chargetime  = g_GlobalVars->curtime - chargebegin;
+
+            DoAutoshoot();
+            static bool currently_charging_pipe = false;
+
+            // Grenade started charging
+            if (chargetime < 6.0f && chargetime && chargebegin)
+                currently_charging_pipe = true;
+
+            // Grenade was released
+            if (!(current_user_cmd->buttons & IN_ATTACK) && currently_charging_pipe)
+            {
+                currently_charging_pipe = false;
+                Aim(target_entity);
+                return false;
+            }
+    break;
+    }
+    default:
+        return true;
 
 
+
+
+}    
 
 }
 
 bool hitscan_special_cases(CachedEntity* target_entity, int weapon_case){
+switch(weapon_case){
+    case CL_CLASS(CTFMinigun):{
+         if (!minigun_tapfire)
+            DoAutoshoot(target_entity);
+        else
+        {
+            // Used to keep track of what tick we're in right now
+            static int tapfire_delay = 0;
+            tapfire_delay++;
 
+            // This is the exact delay needed to hit
+            if (tapfire_delay == 17 || target_entity->m_flDistance() <= 1250.0f)
+            {
+                DoAutoshoot(target_entity);
+                tapfire_delay = 0;
+            }
+            return true;
+        }
+    return true;    
+    break;
+    } 
+    default:
+        return false;   
+}
 
 
 }

@@ -60,7 +60,7 @@ static settings::Float proj_start_vel{ "aimbot.projectile.initial-velocity", "0"
 static settings::Float sticky_autoshoot{ "aimbot.projectile.sticky-autoshoot", "0.5" };
 
 static settings::Boolean aimbot_debug{ "aimbot.debug", "0" };
-settings::Boolean engine_projpred{ "aimbot.debug.engine-pp", "1" };
+static settings::Boolean engine_projpred{ "aimbot.debug.engine-pp", "1" };
 
 static settings::Boolean auto_spin_up{ "aimbot.auto.spin-up", "0" };
 static settings::Boolean minigun_tapfire{ "aimbot.auto.tapfire", "false" };
@@ -110,6 +110,8 @@ bool IsTargetStateGood(CachedEntity *entity);
 void Aim(CachedEntity *entity);
 void DoAutoshoot(CachedEntity *target = nullptr);
 bool small_box_checker(CachedEntity* target_entity);
+bool hitscan_special_cases(CachedEntity* target_entity, int weapon_case);
+bool projectile_special_cases(CachedEntity* target_entity, int weapon_case);
 int BestHitbox(CachedEntity *target);
 int ClosestHitbox(CachedEntity *target);
 void DoSlowAim(Vector &inputAngle);
