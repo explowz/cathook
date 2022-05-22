@@ -415,9 +415,10 @@ static void CreateMove()
                  if(should_backtrack)
                     updateShouldBacktrack(); 
                 
-                if(small_box_checker(target_entity))
+                if(small_box_checker(target_entity)){
                     Aim(target_entity);
                     DoAutoshoot();
+                }
             
         break; 
         }   
