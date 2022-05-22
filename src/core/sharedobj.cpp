@@ -47,7 +47,7 @@ void SharedObject::Load()
     {
         sleep(1);
     }
-    while (!(lmap = (link_map *) dlopen(path.c_str(), RTLD_NOLOAD)))
+    while (!(lmap = (link_map *) dlopen(path.c_str(), RTLD_LAZY | RTLD_NOLOAD)))
     {
         sleep(1);
         char *error = dlerror();
