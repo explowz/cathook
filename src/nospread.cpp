@@ -47,8 +47,7 @@ settings::Boolean draw_mantissa{ "nospread.draw-info.mantissa", "false" };
 settings::Boolean correct_ping{ "nospread.correct-ping", "true" };
 settings::Boolean use_avg_latency{ "nospread.use-average-latency", "false" };
 settings::Boolean extreme_accuracy{ "nospread.use-extreme-accuracy", "false" };
-static bool should_nospread = false;
-bool is_syncing             = false;
+bool is_syncing = false;
 
 bool shouldNoSpread(bool _projectile)
 {
@@ -95,24 +94,17 @@ void CreateMove()
     // Beggars check
     if (CE_INT(LOCAL_W, netvar.iItemDefinitionIndex) == 730)
     {
-        // Check if we released the barrage by releasing m1, also lock bool so people don't just release m1 and tap it again
-        if (!should_nospread)
-            should_nospread = !(current_late_user_cmd->buttons & IN_ATTACK) && g_pLocalPlayer->bAttackLastTick;
-
-        if (!CE_INT(LOCAL_W, netvar.m_iClip1) && CE_INT(LOCAL_W, netvar.iReloadMode) == 0)
-        {
-            // Reset
-            should_nospread = false;
-            return;
-        }
-        // Cancel
-        if (!should_nospread)
+        // Player has 0 loaded rockets and reload mode is not 2 (reloading and ready to release)
+        bool no_loaded_rockets = CE_INT(LOCAL_W, netvar.m_iClip1) == 0 && CE_INT(LOCAL_W, netvar.iReloadMode) != 2;
+        // Player is attacking and reload is not 0 (not reloading)
+        bool loading_rockets = current_late_user_cmd->buttons & IN_ATTACK && CE_INT(LOCAL_W, netvar.iReloadMode) != 0;
+        if (no_loaded_rockets || loading_rockets)
             return;
     }
     // Huntsman check
     else if (LOCAL_W->m_iClassID() == CL_CLASS(CTFCompoundBow))
     {
-        if (!g_pLocalPlayer->bAttackLastTick || (current_late_user_cmd->buttons & IN_ATTACK))
+        if (current_late_user_cmd->buttons & IN_ATTACK || CE_FLOAT(LOCAL_W, netvar.flChargeBeginTime) == 0)
             return;
     }
     // Rest of weapons
