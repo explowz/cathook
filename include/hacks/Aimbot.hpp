@@ -45,6 +45,8 @@ bool IsTargetStateGood(CachedEntity *entity);
 void Aim(CachedEntity *entity);
 void DoAutoshoot(CachedEntity *target = nullptr);
 bool small_box_checker(CachedEntity* target_entity);
+int not_visible_hitbox(CachedEntity *target, int preferred);
+int auto_hitbox(CachedEntity* target);
 bool hitscan_special_cases(CachedEntity* target_entity, int weapon_case);
 bool projectile_special_cases(CachedEntity* target_entity, int weapon_case);
 int BestHitbox(CachedEntity *target);
