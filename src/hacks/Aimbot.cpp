@@ -399,7 +399,6 @@ static void CreateMove()
             if(should_backtrack)
                 updateShouldBacktrack(); 
             CachedEntity *target_entity = target_last = RetrieveBestTarget(aimkey_status);
-            logging::Info("ITRANNNNNNNNNNNNNNNNNNNNNNNN");
             if(small_box_checker(target_entity)){
                     if(should_zoom)
                         doAutoZoom(true);
