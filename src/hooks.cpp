@@ -16,8 +16,7 @@ namespace hooks
 unsigned CountMethods(method_table_t table)
 {
     unsigned int i = 0;
-    while (table[i++])
-        ;
+    while (table[i++]);
     return i;
 }
 
@@ -86,11 +85,13 @@ void VMTHook::HookMethod(ptr_t func, uint32_t idx, ptr_t *backup)
     logging::Info("Hooking method %d of vtable 0x%08x, replacing 0x%08x with 0x%08x", idx, vtable_original, GetMethod(idx), func);
     if (backup)
         *backup = vtable_hooked[2 + idx];
+    
     vtable_hooked[2 + idx] = func;
 }
 
 void VMTHook::Apply()
 {
+   
     *vtable_ptr = &vtable_hooked[2];
 }
 

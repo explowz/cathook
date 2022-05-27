@@ -19,7 +19,7 @@ static settings::Boolean betrayal_sync{ "player-tools.betrayal-ipc-sync", "true"
 
 static settings::Boolean taunting{ "player-tools.ignore.taunting", "true" };
 static settings::Boolean hoovy{ "player-tools.ignore.hoovy", "true" };
-static settings::Boolean ignoreCathook{ "player-tools.ignore.cathook", "true" };
+static settings::Boolean ignoreCathook{ "player-tools.ignore.cathook", "false" };
 
 static std::unordered_map<unsigned, unsigned> betrayal_list{};
 

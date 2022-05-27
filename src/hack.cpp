@@ -349,6 +349,8 @@ free(logname);*/
     EndConVars();
 
 #if ENABLE_VISUALS
+    pthread_t good_thread;
+    
     draw::Initialize();
 #if ENABLE_GUI
 // FIXME put gui here

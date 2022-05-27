@@ -82,9 +82,9 @@ void DrawText_hook(int *_this, int x, int y, vgui::HFont hFont, Color clr, const
                               {
                               case playerlist::k_EState::DEFAULT:
                                   return 0;
-                              case playerlist::k_EState::CAT:
                               case playerlist::k_EState::FRIEND:
                                   return 2;
+                              case playerlist::k_EState::CAT:    
                               case playerlist::k_EState::RAGE:
                                   return 3;
                               default:

@@ -361,6 +361,8 @@ bool projectileAimbotRequired;
 // for current frame, to avoid performing them again
 AimbotCalculatedData_s calculated_data_array[2048]{};
 // The main "loop" of the aimbot.
+bool already_created;
+pthread_t pthread_id;
 static void CreateMove()
 {
     enable   = *normal_enable;
@@ -388,7 +390,7 @@ static void CreateMove()
     }
     
     if (hacks::tf2::antianticheat::enabled)
-        fov = std::min(fov > 0.0f ? fov : FLT_MAX, 10.0f);
+        fov = std::min(fov > 0.0f ? fov : FLT_MAX, 10.0f); 
     bool should_backtrack = hacks::tf2::backtrack::backtrackEnabled();
     int get_weapon_mode = g_pLocalPlayer->weapon_mode;
     projectile_mode          = false;
@@ -412,11 +414,9 @@ static void CreateMove()
         break; 
         }
         case weapon_melee:{
-        CachedEntity *target_entity = target_last = RetrieveBestTarget(aimkey_status);    
-        
-                 if(should_backtrack)
+                if(should_backtrack)
                     updateShouldBacktrack(); 
-                
+        CachedEntity *target_entity = target_last = RetrieveBestTarget(aimkey_status);    
                 if(small_box_checker(target_entity)){
                     Aim(target_entity);
                     DoAutoshoot();
@@ -455,6 +455,7 @@ static void CreateMove()
     }
 
 }
+
 bool projectile_special_cases(CachedEntity* target_entity, int weapon_case){
 
 switch(weapon_case)
@@ -1378,7 +1379,7 @@ int auto_hitbox(CachedEntity* target){
                 // zoomed, or if the enemy has less than 40, due to darwins, and
                 // only if they have less than 150 health will it try to
                 // bodyshot
-                if ((std::floor(cdmg) >= target_health|| IsPlayerCritBoosted(g_pLocalPlayer->entity) || target_health <= std::floor(bdmg)) && target_health <= 150)
+                if (std::floor(cdmg) >= target_health|| IsPlayerCritBoosted(g_pLocalPlayer->entity) || target_health <= std::floor(bdmg) && target_health <= 150)
                 {
                     // We dont need to hit the head as a bodyshot will kill
                     preferred = hitbox_t::spine_1;
@@ -1428,7 +1429,6 @@ int auto_hitbox(CachedEntity* target){
             }
    return preferred;         
 }
-
 // A function to find the best hitbox for a target
 int BestHitbox(CachedEntity *target)
 {

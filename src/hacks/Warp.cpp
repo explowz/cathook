@@ -189,31 +189,31 @@ bool shouldRapidfire()
         return false;
 
     // Already in rapidfire
-    if (in_rapidfire)
+    else if (in_rapidfire)
         return false;
 
     // Only run if key state allows it
-    if (!key_valid)
+    else if (!key_valid)
         return false;
 
     // Dead player
-    if (CE_BAD(LOCAL_E) || !LOCAL_E->m_bAlivePlayer() || CE_BAD(LOCAL_W))
+    else if (CE_BAD(LOCAL_E) || !LOCAL_E->m_bAlivePlayer() || CE_BAD(LOCAL_W))
         return false;
 
     // Weapon specific ignores, knives, Thermal Thruster, Huntsman, Mediguns, and the grappling hook
-    if (re::C_TFWeaponBase::GetWeaponID(RAW_ENT(LOCAL_W)) == 7 || LOCAL_W->m_iClassID() == CL_CLASS(CTFRocketPack) || LOCAL_W->m_iClassID() == CL_CLASS(CTFCompoundBow) || LOCAL_W->m_iClassID() == CL_CLASS(CWeaponMedigun) || LOCAL_W->m_iClassID() == CL_CLASS(CTFGrapplingHook))
+    else if (re::C_TFWeaponBase::GetWeaponID(RAW_ENT(LOCAL_W)) == 7 || LOCAL_W->m_iClassID() == CL_CLASS(CTFRocketPack) || LOCAL_W->m_iClassID() == CL_CLASS(CTFCompoundBow) || LOCAL_W->m_iClassID() == CL_CLASS(CWeaponMedigun) || LOCAL_W->m_iClassID() == CL_CLASS(CTFGrapplingHook))
         return false;
 
     // Ignore throwables/consumables/etc
-    if (g_pLocalPlayer->weapon_mode == weapon_throwable || g_pLocalPlayer->weapon_mode == weapon_consumable || g_pLocalPlayer->weapon_mode == weapon_pda)
+    else if (g_pLocalPlayer->weapon_mode == weapon_throwable || g_pLocalPlayer->weapon_mode == weapon_consumable || g_pLocalPlayer->weapon_mode == weapon_pda)
         return false;
 
     // Unrevved minigun cannot rapidfire
-    if (LOCAL_W->m_iClassID() == CL_CLASS(CTFMinigun) && CE_INT(LOCAL_W, netvar.iWeaponState) != 3 && CE_INT(LOCAL_W, netvar.iWeaponState) != 2)
+    else if (LOCAL_W->m_iClassID() == CL_CLASS(CTFMinigun) && CE_INT(LOCAL_W, netvar.iWeaponState) != 3 && CE_INT(LOCAL_W, netvar.iWeaponState) != 2)
         return false;
 
     // Check if enemies are close enough
-    if (distance)
+    else if (distance)
     {
         auto closest = getClosestNonlocalEntity(LOCAL_E->m_vecOrigin());
         if (!closest || closest->m_flDistance() > *distance)
@@ -221,7 +221,7 @@ bool shouldRapidfire()
     }
 
     // We do not have the amount of ticks needed, don't try it
-    if (warp_amount < TIME_TO_TICKS(getFireDelay()) && (TIME_TO_TICKS(getFireDelay()) < *maxusrcmdprocessticks - 1 || (wait_full && warp_amount != GetMaxWarpTicks())))
+    else if (warp_amount < TIME_TO_TICKS(getFireDelay()) && (TIME_TO_TICKS(getFireDelay()) < *maxusrcmdprocessticks - 1 || (wait_full && warp_amount != GetMaxWarpTicks())))
         return false;
 
     // Mouse 1 is held, do it.
