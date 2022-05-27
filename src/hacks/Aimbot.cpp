@@ -377,7 +377,7 @@ static void CreateMove()
         target_last = nullptr;
         return;
     }
-    else if(CE_BAD(LOCAL_E) || !LOCAL_E->m_bAlivePlayer() || CE_BAD(LOCAL_W)){
+    else if(!LOCAL_E->m_bAlivePlayer()){
         target_last = nullptr;
         return;
     }
@@ -836,7 +836,7 @@ bool IsTargetStateGood(CachedEntity *entity)
         else if (IsPlayerInvulnerable(entity))
                 return false;    
         // Distance
-        int hb = BestHitbox(entity);
+        
         float targeting_range = EffectiveTargetingRange();
             
             if (g_pLocalPlayer->weapon_mode != weapon_melee)
@@ -846,6 +846,7 @@ bool IsTargetStateGood(CachedEntity *entity)
             }
             else
             {
+                int hb = BestHitbox(entity);
                 if(hb==-1)
                 return false;
                 Vector newangle = GetAimAtAngles(g_pLocalPlayer->v_Eye, entity->hitboxes.GetHitbox(hb)->center, LOCAL_E);
@@ -943,7 +944,7 @@ bool IsTargetStateGood(CachedEntity *entity)
 
         
         AimbotCalculatedData_s &cd = calculated_data_array[entity->m_IDX];
-        cd.hitbox                  = hb;
+        cd.hitbox                  = BestHitbox(entity);
         bool vis_check = VischeckPredictedEntity(entity);
         // Vis check + fov check
         if (!vis_check)
@@ -1334,7 +1335,7 @@ int not_visible_hitbox(CachedEntity *target, int preferred){
             return preferred;
         // Else attempt to find any hitbox at all
         else
-        return 3;
+        return hitbox_t::spine_1;
 }
 int auto_hitbox(CachedEntity* target){
 
@@ -1385,7 +1386,7 @@ int auto_hitbox(CachedEntity* target){
                     return preferred;
                 }
 
-                return not_visible_hitbox(target,hitbox_t::head);
+                return hitbox_t::head;
             }
            
 
@@ -1396,9 +1397,9 @@ int auto_hitbox(CachedEntity* target){
                 float charge      = g_GlobalVars->curtime - begincharge;
                 int damage        = std::floor(50.0f + 70.0f * fminf(1.0f, charge));
                 if (damage >= target_health)
-                    preferred = hitbox_t::spine_1;
+                    return hitbox_t::spine_1;
                 else
-                    preferred = hitbox_t::head;
+                    return hitbox_t::head;
             }
 
             // Ambassador
@@ -1413,7 +1414,7 @@ int auto_hitbox(CachedEntity* target){
                     return hitbox_t::spine_1;
                 }
                 else{
-                    preferred = not_visible_hitbox(target, hitbox_t::head);
+                    return hitbox_t::head;
                 }
 
             }
@@ -1423,7 +1424,7 @@ int auto_hitbox(CachedEntity* target){
             {
                 bool ground = CE_INT(target, netvar.iFlags) & (1 << 0);
                 if (ground)
-                    preferred = not_visible_hitbox(target,  hitbox_t::foot_L);
+                    preferred = not_visible_hitbox(target,  hitbox_t::foot_L);  // Only time it is worth the penalty
             }
    return preferred;         
 }
