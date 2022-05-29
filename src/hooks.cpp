@@ -91,7 +91,6 @@ void VMTHook::HookMethod(ptr_t func, uint32_t idx, ptr_t *backup)
 
 void VMTHook::Apply()
 {
-   
     *vtable_ptr = &vtable_hooked[2];
 }
 

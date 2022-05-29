@@ -93,7 +93,7 @@ int slow_aim;
 float fov;
 bool enable;
 
-static void spectatorUpdate()
+void spectatorUpdate()
 {
     switch (*specmode)
     {
@@ -123,7 +123,7 @@ static void spectatorUpdate()
     }
 }
 
-static bool playerTeamCheck(CachedEntity *entity)
+bool playerTeamCheck(CachedEntity *entity)
 {
     return (int) teammates == 2 || (entity->m_bEnemy() && !teammates) || (!entity->m_bEnemy() && teammates) || (CE_GOOD(LOCAL_W) && LOCAL_W->m_iClassID() == CL_CLASS(CTFCrossbow) && entity->m_iHealth() < entity->m_iMaxHealth());
 }
@@ -131,7 +131,7 @@ static bool playerTeamCheck(CachedEntity *entity)
 #define GET_MIDDLE(c1, c2) (corners[c1] + corners[c2]) / 2.0f
 
 // Get all the valid aim positions
-static std::vector<Vector> getValidHitpoints(CachedEntity *ent, int hitbox)
+std::vector<Vector> getValidHitpoints(CachedEntity *ent, int hitbox)
 {
     // Recorded vischeckable points
     std::vector<Vector> hitpoints;
@@ -209,7 +209,7 @@ static std::vector<Vector> getValidHitpoints(CachedEntity *ent, int hitbox)
 }
 
 // Get the best point to aim at for a given hitbox
-static std::optional<Vector> getBestHitpoint(CachedEntity *ent, int hitbox)
+std::optional<Vector> getBestHitpoint(CachedEntity *ent, int hitbox)
 {
     auto positions = getValidHitpoints(ent, hitbox);
 
@@ -308,17 +308,17 @@ bool validateTickFOV(tf2::backtrack::BacktrackData &tick)
 }
 
 // Am I holding Hitman's Heatmaker ?
-static bool CarryingHeatmaker()
+bool CarryingHeatmaker()
 {
     return CE_INT(LOCAL_W, netvar.iItemDefinitionIndex) == 752;
 }
 
-static void doAutoZoom(bool target_found)
+void doAutoZoom(bool target_found)
 {
     bool isIdle = target_found ? false : hacks::shared::followbot::isIdle();
 
     // Keep track of our zoom time
-    static Timer zoomTime{};
+    Timer zoomTime{};
 
     // Minigun spun up handler
     if (auto_spin_up && g_pLocalPlayer->weapon()->m_iClassID() == CL_CLASS(CTFMinigun))
@@ -502,7 +502,7 @@ switch(weapon_case)
             float chargetime  = g_GlobalVars->curtime - chargebegin;
 
             DoAutoshoot();
-            static bool currently_charging_pipe = false;
+            bool currently_charging_pipe = false;
 
             // Grenade started charging
             if (chargetime < 6.0f && chargetime && chargebegin)
@@ -535,7 +535,7 @@ switch(weapon_case){
         else
         {
             // Used to keep track of what tick we're in right now
-            static int tapfire_delay = 0;
+            int tapfire_delay = 0;
             tapfire_delay++;
 
             // This is the exact delay needed to hit
@@ -615,31 +615,31 @@ bool ShouldAim()
     if (current_user_cmd->buttons & IN_USE)
         return false;
     // Check if using action slot item
-    if (g_pLocalPlayer->using_action_slot_item)
+    else if (g_pLocalPlayer->using_action_slot_item)
         return false;
     // Using a forbidden weapon?
-    if (g_pLocalPlayer->weapon()->m_iClassID() == CL_CLASS(CTFKnife) || CE_INT(LOCAL_W, netvar.iItemDefinitionIndex) == 237 || CE_INT(LOCAL_W, netvar.iItemDefinitionIndex) == 265)
+    else if (g_pLocalPlayer->weapon()->m_iClassID() == CL_CLASS(CTFKnife) || CE_INT(LOCAL_W, netvar.iItemDefinitionIndex) == 237 || CE_INT(LOCAL_W, netvar.iItemDefinitionIndex) == 265)
         return false;
 
    
         // Carrying A building?
-        if (CE_BYTE(g_pLocalPlayer->entity, netvar.m_bCarryingObject))
+        else if (CE_BYTE(g_pLocalPlayer->entity, netvar.m_bCarryingObject))
             return false;
         // Deadringer out?
-        if (CE_BYTE(g_pLocalPlayer->entity, netvar.m_bFeignDeathReady))
+        else if (CE_BYTE(g_pLocalPlayer->entity, netvar.m_bFeignDeathReady))
             return false;
-        if (g_pLocalPlayer->holding_sapper)
+        else if (g_pLocalPlayer->holding_sapper)
                 return false;    
         // Is bonked?
-        if (HasCondition<TFCond_Bonked>(g_pLocalPlayer->entity))
+        else if (HasCondition<TFCond_Bonked>(g_pLocalPlayer->entity))
             return false;
         // Is taunting?
-        if (HasCondition<TFCond_Taunting>(g_pLocalPlayer->entity))
+        else if (HasCondition<TFCond_Taunting>(g_pLocalPlayer->entity))
             return false;
         // Is cloaked
-        if (IsPlayerInvisible(g_pLocalPlayer->entity))
+        else if (IsPlayerInvisible(g_pLocalPlayer->entity))
             return false;
-        if (LOCAL_W->m_iClassID() == CL_CLASS(CTFMinigun) && CE_INT(LOCAL_E, netvar.m_iAmmo + 4) == 0)
+        else if (LOCAL_W->m_iClassID() == CL_CLASS(CTFMinigun) && CE_INT(LOCAL_E, netvar.m_iAmmo + 4) == 0)
             return false;    
 #if ENABLE_VISUALS
     if (assistance_only && !MouseMoving())
@@ -818,7 +818,7 @@ bool IsTargetStateGood(CachedEntity *entity)
 {  
     PROF_SECTION(PT_aimbot_targetstatecheck);
     
-    int current_type = entity->m_Type();
+    const int current_type = entity->m_Type();
     switch(current_type){
 
     case(ENTITY_PLAYER):{
@@ -1151,7 +1151,7 @@ void DoAutoshoot(CachedEntity *target_entity)
     // Enable check
     if (!autoshoot)
         return;
-    if (IsPlayerDisguised(g_pLocalPlayer->entity) && !autoshoot_disguised)
+    else if (IsPlayerDisguised(g_pLocalPlayer->entity) && !autoshoot_disguised)
         return;
     // Handle Huntsman/Loose cannon
     if (g_pLocalPlayer->weapon()->m_iClassID() == CL_CLASS(CTFCompoundBow) || g_pLocalPlayer->weapon()->m_iClassID() == CL_CLASS(CTFCannon))
@@ -1252,7 +1252,7 @@ Vector PredictEntity(CachedEntity *entity, bool vischeck)
     Vector &result             = cd.aim_position;
     if (cd.predict_tick == tickcount && cd.predict_type == vischeck && !shouldBacktrack(entity))
         return result;
-    short int curr_type = entity->m_Type();    
+    const short int curr_type = entity->m_Type();    
 
     // Players
     

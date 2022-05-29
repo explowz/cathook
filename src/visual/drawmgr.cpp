@@ -29,6 +29,7 @@ static settings::Boolean info_text_min{ "hack-info.minimal", "false" };
 
 void render_cheat_visuals()
 {
+    
     {
         PROF_SECTION(BeginCheatVisuals);
         BeginCheatVisuals();
@@ -41,6 +42,7 @@ void render_cheat_visuals()
         PROF_SECTION(EndCheatVisuals);
         EndCheatVisuals();
     }
+    
 }
 #if ENABLE_GLEZ_DRAWING
 glez::record::Record bufferA{};

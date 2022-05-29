@@ -18,7 +18,6 @@ extern settings::Boolean die_if_vac;
 static Timer checkmmban{};
 namespace hooked_methods
 {
-
 DEFINE_HOOKED_METHOD(Paint, void, IEngineVGui *this_, PaintMode_t mode)
 {
     if (!isHackActive())
@@ -99,10 +98,14 @@ DEFINE_HOOKED_METHOD(Paint, void, IEngineVGui *this_, PaintMode_t mode)
 #endif
         // MOVED BACK because glez and imgui flicker in painttraveerse
 #if ENABLE_IMGUI_DRAWING || ENABLE_GLEZ_DRAWING
+      
         render_cheat_visuals();
+        
 #endif
         // Call all paint functions
-        EC::run(EC::Paint);
+       
+       EC::run(EC::Paint);
+    
     }
 
 #if ENABLE_TEXTMODE

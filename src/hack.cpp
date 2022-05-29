@@ -164,10 +164,9 @@ static void InitRandom()
     if (rnd)
         fclose(rnd);
 }
-
 void hack::Hook()
 {
-    uintptr_t *clientMode = 0;
+     uintptr_t *clientMode = 0;
     // Bad way to get clientmode.
     // FIXME [MP]?
     while (!(clientMode = **(uintptr_t ***) ((uintptr_t)((*(void ***) g_IBaseClient)[10]) + 1)))
@@ -186,7 +185,7 @@ void hack::Hook()
     hooks::clientmode4.Set((void *) (clientMode), 4);
     hooks::clientmode4.HookMethod(HOOK_ARGS(FireGameEvent));
     hooks::clientmode4.Apply();
-
+    
     hooks::client.Set(g_IBaseClient);
     hooks::client.HookMethod(HOOK_ARGS(DispatchUserMessage));
 #if ENABLE_VISUALS
@@ -348,9 +347,7 @@ free(logname);*/
     g_Settings.Init();
     EndConVars();
 
-#if ENABLE_VISUALS
-    pthread_t good_thread;
-    
+#if ENABLE_VISUALS    
     draw::Initialize();
 #if ENABLE_GUI
 // FIXME put gui here
@@ -398,6 +395,7 @@ free(logname);*/
             logging::Info("Bypassed force competitive cvars!");
         }
     }
+    
     hack::Hook();
 }
 

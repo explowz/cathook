@@ -15,7 +15,6 @@
 #include "NavBot.hpp"
 #include "HookTools.hpp"
 #include "teamroundtimer.hpp"
-
 #include "HookedMethods.hpp"
 #include "nospread.hpp"
 #include "Warp.hpp"
@@ -131,13 +130,14 @@ void PrecalculateCanShoot()
 static int attackticks = 0;
 namespace hooked_methods
 {
+              
+    
 DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUserCmd *cmd)
 {
     g_Settings.is_create_move = true;
     bool time_replaced, ret, speedapplied;
     float curtime_old, servertime, speed, yaw;
     Vector vsilent, ang;
-
     current_user_cmd = cmd;
     EC::run(EC::CreateMoveEarly);
     IF_GAME(IsTF2C())
