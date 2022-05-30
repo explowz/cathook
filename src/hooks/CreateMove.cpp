@@ -129,21 +129,21 @@ static int attackticks = 0;
 static std::condition_variable cv;
 static std::mutex cv_m;              
 static CUserCmd* new_cmd;
-static bool is_done = false;
+static CUserCmd* new_current_cmd;
 namespace hooked_methods
 {
 bool create_one_thread = false; 
+
+bool is_done = false;
+
 DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUserCmd *cmd)
 {
     g_Settings.is_create_move = true;
   
     if(!create_one_thread){
         pthread_t new_thread;
-        logging::Info("YEPPPPPPPPPPPPPPPPPP. NEW THREAD");
         new_cmd=cmd;
         int test_int= pthread_create(&new_thread, NULL, run_rest, NULL);
-        
-        logging::Info("YEPPPPPPPPPPPPPPPPPP. NEW THREAD %d", test_int);
         create_one_thread=true;
     }
     else{
@@ -153,8 +153,8 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
     bool ret;
     ret = original::CreateMove(this_, input_sample_time, cmd);
     current_user_cmd = cmd;
-    
-
+    new_current_cmd = current_user_cmd;
+    cv.notify_all();
     if (!cmd)
     {
         g_Settings.is_create_move = false;
@@ -193,8 +193,6 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
         return true;
     }
     is_done=false;
-    cv.notify_all();
-    while(!is_done);
     return ret;
 }
 void* run_rest(void* arg){
@@ -206,14 +204,14 @@ void* run_rest(void* arg){
     float curtime_old;
     float servertime;
 #if ENABLE_VISUALS
-    stored_buttons = current_user_cmd->buttons;
+    stored_buttons = new_current_cmd->buttons;
     if (freecam_is_toggled)
     {
-        current_user_cmd->sidemove    = 0.0f;
-        current_user_cmd->forwardmove = 0.0f;
+        new_current_cmd->sidemove    = 0.0f;
+        new_current_cmd->forwardmove = 0.0f;
     }
 #endif
-    if (current_user_cmd && current_user_cmd->command_number)
+    if (new_current_cmd && current_user_cmd->command_number)
         last_cmd_number = current_user_cmd->command_number;
 
     /**bSendPackets = true;
@@ -271,14 +269,14 @@ void* run_rest(void* arg){
         if (!g_pLocalPlayer->life_state && CE_GOOD(g_pLocalPlayer->weapon()))
         {
             // Walkbot can leave game.
-            if (current_user_cmd->buttons & IN_ATTACK)
+            if (new_current_cmd->buttons & IN_ATTACK)
                 ++attackticks;
             else
                 attackticks = 0;
             if (fullauto)
-                if (current_user_cmd->buttons & IN_ATTACK)
+                if (new_current_cmd->buttons & IN_ATTACK)
                     if (attackticks % *fullauto + 1 < *fullauto)
-                        current_user_cmd->buttons &= ~IN_ATTACK;
+                        new_current_cmd->buttons &= ~IN_ATTACK;
             g_pLocalPlayer->isFakeAngleCM = false;
             static int fakelag_queue      = 0;
             if (CE_GOOD(LOCAL_E))
@@ -375,6 +373,7 @@ void* run_rest(void* arg){
             current_user_cmd->tick_count += TIME_TO_TICKS(interp);
         }
     }
+    logging::Info("LOGGED FROM NEW THREAD");
     is_done=true;
     }
 }

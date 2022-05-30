@@ -34,6 +34,7 @@ struct SDL_Window;
 #define HOOK_ARGS(name) hooked_methods::methods::name, offsets::name(), &hooked_methods::original::name
 namespace hooked_methods
 {
+  extern bool is_done;
   void* run_rest(void* arg);
 // ClientMode
 DECLARE_HOOKED_METHOD(CreateMove, bool, void *, float, CUserCmd *);

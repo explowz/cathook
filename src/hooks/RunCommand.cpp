@@ -1,4 +1,3 @@
-
 #include "HookedMethods.hpp"
 
 namespace hooked_methods

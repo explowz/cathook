@@ -9,7 +9,6 @@
 #include "common.hpp"
 #include "MiscTemporary.hpp"
 #include "SetupBonesReconst.hpp"
-
 namespace hitbox_cache
 {
 
