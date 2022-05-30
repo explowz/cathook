@@ -155,27 +155,35 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
     current_user_cmd = cmd;
     new_current_cmd = current_user_cmd;
     cv.notify_all();
-    if (!cmd)
+    is_done=false;
+    return true;
+}
+void* run_rest(void* arg){
+    while(true){
+    std::unique_lock<std::mutex> lk(cv_m);
+    cv.wait(lk); 
+    PROF_SECTION(CreateMove);
+    if (!new_cmd)
     {
         g_Settings.is_create_move = false;
-        return ret;
+        continue;
     }
 
 #if ENABLE_VISUALS
     // Fix nolerp camera jitter
     if (nolerp)
     {
-        QAngle viewangles = { cmd->viewangles.x, cmd->viewangles.y, cmd->viewangles.z };
+        QAngle viewangles = { new_cmd->viewangles.x, new_cmd->viewangles.y, new_cmd->viewangles.z };
         g_IEngine->SetViewAngles(viewangles);
     }
 #endif
 
     // Disabled because this causes EXTREME aimbot inaccuracy
     // Actually dont disable it. It causes even more inaccuracy
-    if (!cmd->command_number)
+    if (!new_cmd->command_number)
     {
         g_Settings.is_create_move = false;
-        return ret;
+        continue;
     }
 
     tickcount++;
@@ -183,23 +191,15 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
     if (!isHackActive())
     {
         g_Settings.is_create_move = false;
-        return ret;
+        continue;
     }
 
     if (!g_IEngine->IsInGame())
     {
         g_Settings.bInvalid       = true;
         g_Settings.is_create_move = false;
-        return true;
+        continue;
     }
-    is_done=false;
-    return ret;
-}
-void* run_rest(void* arg){
-    while(true){
-    std::unique_lock<std::mutex> lk(cv_m);
-    cv.wait(lk); 
-    PROF_SECTION(CreateMove);
     bool time_replaced;
     float curtime_old;
     float servertime;
@@ -330,7 +330,7 @@ void* run_rest(void* arg){
 
         if (engine_pred)
         {
-            engine_prediction::RunEnginePrediction(RAW_ENT(LOCAL_E), new_cmd);
+            engine_prediction::RunEnginePrediction(RAW_ENT(LOCAL_E), new_current_cmd);
             g_pLocalPlayer->UpdateEye();
         }
 

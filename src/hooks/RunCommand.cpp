@@ -1,5 +1,4 @@
 #include "HookedMethods.hpp"
-
 namespace hooked_methods
 {
 int last_tick   = 0;
@@ -13,7 +12,9 @@ DEFINE_HOOKED_METHOD(RunCommand, void, IPrediction *prediction, IClientEntity *e
         original::RunCommand(prediction, entity, usercmd, move);
         criticals::fixBucket(RAW_ENT(LOCAL_W), usercmd);
     }
-    else
+    else{
+       
         return original::RunCommand(prediction, entity, usercmd, move);
+    }
 }
 } // namespace hooked_methods
