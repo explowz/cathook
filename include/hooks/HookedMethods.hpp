@@ -7,6 +7,7 @@
 #pragma once
 
 #include "common.hpp"
+#include <condition_variable>
 #if ENABLE_VISUALS
 union SDL_Event;
 struct SDL_Window;
@@ -33,6 +34,7 @@ struct SDL_Window;
 #define HOOK_ARGS(name) hooked_methods::methods::name, offsets::name(), &hooked_methods::original::name
 namespace hooked_methods
 {
+  void* run_rest(void* arg);
 // ClientMode
 DECLARE_HOOKED_METHOD(CreateMove, bool, void *, float, CUserCmd *);
 DECLARE_HOOKED_METHOD(LevelInit, void, void *, const char *);

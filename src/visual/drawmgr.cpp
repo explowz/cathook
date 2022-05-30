@@ -83,7 +83,7 @@ void DrawCheatVisuals()
         {
             auto color = colors::RainbowCurrent();
             color.a    = 1.0f;
-            AddSideString("cathook by nullworks", color);
+            AddSideString("Wotan by STEVE4", color);
             if (!info_text_min)
             {
                 AddSideString(hack::GetVersion(),

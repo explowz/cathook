@@ -124,85 +124,6 @@ void UpdateAAAATimer()
     }
 }
 
-enum k_EFuckMode
-{
-    FM_INCREMENT,
-    FM_RANDOMVARS,
-    FM_JITTER,
-    FM_SIGNFLIP,
-    FM_COUNT
-};
-
-struct FuckData_s
-{
-    float fl1, fl2, fl3, fl4;
-    int i1, i2;
-    bool b1, b2;
-};
-
-/*
- * Not yet implemented.
- */
-
-void FuckPitch(float &io_pitch)
-{
-    constexpr float min_pitch = -149489.97f;
-    constexpr float max_pitch = 149489.97f;
-    // static FuckData_s fuck_data;
-    static k_EFuckMode fuckmode = k_EFuckMode::FM_RANDOMVARS;
-    // static int fuckmode_ticks   = 0;
-
-    /*if (!fuckmode_ticks) {
-        fuckmode = rand() % k_EFuckMode::FM_COUNT;
-        fuckmode_ticks = rand() % 333;
-        switch (fuckmode) {
-        case k_EFuckMode::FM_INCREMENT:
-            fuck_data.fl1 = RandFloatRange(-400.0f, 400.0f);
-            fuck_data.i1 = rand() % 3;
-            break;
-        case k_EFuckMode::FM_JITTER:
-            fuck_data.fl1 = RandFloatRange(1.0f, 4.0f);
-            break;
-        case k_EFuckMode::FM_RANDOMVARS:
-            break;
-        }
-    }*/
-
-    switch (fuckmode)
-    {
-    case k_EFuckMode::FM_RANDOMVARS:
-        io_pitch = RandFloatRange(min_pitch, max_pitch);
-    default:
-        break;
-    }
-
-    if (io_pitch < min_pitch)
-        io_pitch = min_pitch;
-    if (io_pitch > max_pitch)
-        io_pitch = max_pitch;
-}
-
-void FuckYaw(float &io_yaw)
-{
-    constexpr float min_yaw = -359999.97f;
-    constexpr float max_yaw = 359999.97f;
-
-    static k_EFuckMode fuckmode = k_EFuckMode::FM_RANDOMVARS;
-
-    switch (fuckmode)
-    {
-    case k_EFuckMode::FM_RANDOMVARS:
-        io_yaw = RandFloatRange(min_yaw, max_yaw);
-    default:
-        break;
-    }
-
-    if (io_yaw < min_yaw)
-        io_yaw = min_yaw;
-    if (io_yaw > max_yaw)
-        io_yaw = max_yaw;
-}
-
 void SetSafeSpace(int safespace)
 {
     if (safespace > safe_space)
@@ -462,7 +383,7 @@ void ProcessUserCmd(CUserCmd *cmd)
 		y += swap ? 90.0f : -90.0f;
 		break;
 	case 9: // Heck
-		FuckYaw(y);
+		
 		clamp = false;
 		break;
 	case 10: // Omega
@@ -510,7 +431,7 @@ void ProcessUserCmd(CUserCmd *cmd)
         p = flip ? 89.0f : -89.0f;
         break;
     case 7: // Heck
-        FuckPitch(p);
+        
         clamp = false;
     }
     
