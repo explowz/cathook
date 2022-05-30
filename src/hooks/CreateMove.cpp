@@ -15,6 +15,7 @@
 #include "NavBot.hpp"
 #include "HookTools.hpp"
 #include "teamroundtimer.hpp"
+
 #include "HookedMethods.hpp"
 #include "nospread.hpp"
 #include "Warp.hpp"
@@ -25,6 +26,7 @@ static settings::Boolean forward_speedhack{ "misc.roll-speedhack.forward", "fals
 settings::Boolean engine_pred{ "misc.engine-prediction", "true" };
 static settings::Boolean debug_projectiles{ "debug.projectiles", "false" };
 static settings::Int fullauto{ "misc.full-auto", "0" };
+static settings::Boolean fuckmode{ "misc.fuckmode", "false" };
 
 class CMoveData;
 namespace engine_prediction
@@ -125,65 +127,47 @@ void PrecalculateCanShoot()
     // Check if can shoot
     calculated_can_shoot = next_attack <= server_time;
 }
+
 static int attackticks = 0;
-static std::condition_variable cv;
-static std::mutex cv_m;              
-static CUserCmd* new_cmd;
-static CUserCmd* new_current_cmd;
 namespace hooked_methods
 {
-bool create_one_thread = false; 
-
-bool is_done = false;
-
 DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUserCmd *cmd)
 {
     g_Settings.is_create_move = true;
-  
-    if(!create_one_thread){
-        pthread_t new_thread;
-        new_cmd=cmd;
-        int test_int= pthread_create(&new_thread, NULL, run_rest, NULL);
-        create_one_thread=true;
-    }
-    else{
-          new_cmd = cmd;
-    }
-    EC::run(EC::CreateMoveEarly);
-    bool ret;
-    ret = original::CreateMove(this_, input_sample_time, cmd);
+    bool time_replaced, ret, speedapplied;
+    float curtime_old, servertime, speed, yaw;
+    Vector vsilent, ang;
+
     current_user_cmd = cmd;
-    new_current_cmd = current_user_cmd;
-    cv.notify_all();
-    is_done=false;
-    return true;
-}
-void* run_rest(void* arg){
-    while(true){
-    std::unique_lock<std::mutex> lk(cv_m);
-    cv.wait(lk); 
-    PROF_SECTION(CreateMove);
-    if (!new_cmd)
+    EC::run(EC::CreateMoveEarly);
+    IF_GAME(IsTF2C())
+    {
+        if (CE_GOOD(LOCAL_W) && minigun_jump && LOCAL_W->m_iClassID() == CL_CLASS(CTFMinigun))
+            CE_INT(LOCAL_W, netvar.iWeaponState) = 0;
+    }
+    ret = original::CreateMove(this_, input_sample_time, cmd);
+
+    if (!cmd)
     {
         g_Settings.is_create_move = false;
-        continue;
+        return ret;
     }
 
 #if ENABLE_VISUALS
     // Fix nolerp camera jitter
     if (nolerp)
     {
-        QAngle viewangles = { new_cmd->viewangles.x, new_cmd->viewangles.y, new_cmd->viewangles.z };
+        QAngle viewangles = { cmd->viewangles.x, cmd->viewangles.y, cmd->viewangles.z };
         g_IEngine->SetViewAngles(viewangles);
     }
 #endif
 
     // Disabled because this causes EXTREME aimbot inaccuracy
     // Actually dont disable it. It causes even more inaccuracy
-    if (!new_cmd->command_number)
+    if (!cmd->command_number)
     {
         g_Settings.is_create_move = false;
-        continue;
+        return ret;
     }
 
     tickcount++;
@@ -191,27 +175,26 @@ void* run_rest(void* arg){
     if (!isHackActive())
     {
         g_Settings.is_create_move = false;
-        continue;
+        return ret;
     }
 
     if (!g_IEngine->IsInGame())
     {
         g_Settings.bInvalid       = true;
         g_Settings.is_create_move = false;
-        continue;
+        return true;
     }
-    bool time_replaced;
-    float curtime_old;
-    float servertime;
+
+    PROF_SECTION(CreateMove);
 #if ENABLE_VISUALS
-    stored_buttons = new_current_cmd->buttons;
+    stored_buttons = current_user_cmd->buttons;
     if (freecam_is_toggled)
     {
-        new_current_cmd->sidemove    = 0.0f;
-        new_current_cmd->forwardmove = 0.0f;
+        current_user_cmd->sidemove    = 0.0f;
+        current_user_cmd->forwardmove = 0.0f;
     }
 #endif
-    if (new_current_cmd && current_user_cmd->command_number)
+    if (current_user_cmd && current_user_cmd->command_number)
         last_cmd_number = current_user_cmd->command_number;
 
     /**bSendPackets = true;
@@ -225,6 +208,14 @@ void* run_rest(void* arg){
 
     time_replaced = false;
     curtime_old   = g_GlobalVars->curtime;
+
+    if (*fuckmode)
+    {
+        static int prevbuttons = 0;
+        current_user_cmd->buttons |= prevbuttons;
+        prevbuttons |= current_user_cmd->buttons;
+    }
+
     if (!g_Settings.bInvalid && CE_GOOD(g_pLocalPlayer->entity))
     {
         servertime            = (float) CE_INT(g_pLocalPlayer->entity, netvar.nTickBase) * g_GlobalVars->interval_per_tick;
@@ -264,19 +255,25 @@ void* run_rest(void* arg){
         firstcm = false;
     }
     g_Settings.bInvalid = false;
+
     if (CE_GOOD(g_pLocalPlayer->entity))
     {
         if (!g_pLocalPlayer->life_state && CE_GOOD(g_pLocalPlayer->weapon()))
         {
             // Walkbot can leave game.
-            if (new_current_cmd->buttons & IN_ATTACK)
+            if (!g_IEngine->IsInGame())
+            {
+                g_Settings.is_create_move = false;
+                return ret;
+            }
+            if (current_user_cmd->buttons & IN_ATTACK)
                 ++attackticks;
             else
                 attackticks = 0;
             if (fullauto)
-                if (new_current_cmd->buttons & IN_ATTACK)
+                if (current_user_cmd->buttons & IN_ATTACK)
                     if (attackticks % *fullauto + 1 < *fullauto)
-                        new_current_cmd->buttons &= ~IN_ATTACK;
+                        current_user_cmd->buttons &= ~IN_ATTACK;
             g_pLocalPlayer->isFakeAngleCM = false;
             static int fakelag_queue      = 0;
             if (CE_GOOD(LOCAL_E))
@@ -318,7 +315,7 @@ void* run_rest(void* arg){
                 }
             {
                 PROF_SECTION(CM_antiaim);
-                hacks::shared::antiaim::ProcessUserCmd(new_cmd);
+                hacks::shared::antiaim::ProcessUserCmd(cmd);
             }
             if (debug_projectiles)
                 projectile_logging::Update();
@@ -330,7 +327,7 @@ void* run_rest(void* arg){
 
         if (engine_pred)
         {
-            engine_prediction::RunEnginePrediction(RAW_ENT(LOCAL_E), new_current_cmd);
+            engine_prediction::RunEnginePrediction(RAW_ENT(LOCAL_E), current_user_cmd);
             g_pLocalPlayer->UpdateEye();
         }
 
@@ -360,7 +357,71 @@ void* run_rest(void* arg){
         }
     }
 #endif
-    g_pLocalPlayer->UpdateEnd();
+    if (CE_GOOD(g_pLocalPlayer->entity))
+    {
+        speedapplied = false;
+        if (roll_speedhack && cmd->buttons & IN_DUCK && (CE_INT(g_pLocalPlayer->entity, netvar.iFlags) & FL_ONGROUND) && !(cmd->buttons & IN_ATTACK) && !HasCondition<TFCond_Charging>(LOCAL_E))
+        {
+            speed                     = Vector{ cmd->forwardmove, cmd->sidemove, 0.0f }.Length();
+            static float prevspeedang = 0.0f;
+            if (fabs(speed) > 0.0f)
+            {
+
+                if (forward_speedhack)
+                {
+                    cmd->forwardmove *= -1.0f;
+                    cmd->sidemove *= -1.0f;
+                    cmd->viewangles.x = 91;
+                }
+                Vector vecMove(cmd->forwardmove, cmd->sidemove, 0.0f);
+
+                vecMove *= -1;
+                float flLength = vecMove.Length();
+                Vector angMoveReverse{};
+                VectorAngles(vecMove, angMoveReverse);
+                cmd->forwardmove = -flLength;
+                cmd->sidemove    = 0.0f; // Move only backwards, no sidemove
+                float res        = g_pLocalPlayer->v_OrigViewangles.y - angMoveReverse.y;
+                while (res > 180)
+                    res -= 360;
+                while (res < -180)
+                    res += 360;
+                if (res - prevspeedang > 90.0f)
+                    res = (res + prevspeedang) / 2;
+                prevspeedang                     = res;
+                cmd->viewangles.y                = res;
+                cmd->viewangles.z                = 90.0f;
+                g_pLocalPlayer->bUseSilentAngles = true;
+                speedapplied                     = true;
+            }
+        }
+        if (g_pLocalPlayer->bUseSilentAngles)
+        {
+            if (!speedapplied)
+            {
+                vsilent.x = cmd->forwardmove;
+                vsilent.y = cmd->sidemove;
+                vsilent.z = cmd->upmove;
+                speed     = sqrt(vsilent.x * vsilent.x + vsilent.y * vsilent.y);
+                VectorAngles(vsilent, ang);
+                yaw                 = DEG2RAD(ang.y - g_pLocalPlayer->v_OrigViewangles.y + cmd->viewangles.y);
+                cmd->forwardmove    = cos(yaw) * speed;
+                cmd->sidemove       = sin(yaw) * speed;
+                float clamped_pitch = fabsf(fmodf(cmd->viewangles.x, 360.0f));
+                if (clamped_pitch >= 90 && clamped_pitch <= 270)
+                    cmd->forwardmove = -cmd->forwardmove;
+            }
+
+            ret = false;
+        }
+        g_pLocalPlayer->UpdateEnd();
+    }
+
+    //	PROF_END("CreateMove");
+    if (!(cmd->buttons & IN_ATTACK))
+    {
+        // LoadSavedState();
+    }
     g_Settings.is_create_move = false;
     if (nolerp)
     {
@@ -370,13 +431,12 @@ void* run_rest(void* arg){
         else
         {
             float interp = MAX(cl_interp->GetFloat(), cl_interp_ratio->GetFloat() / pUpdateRate->GetFloat());
-            current_user_cmd->tick_count += TIME_TO_TICKS(interp);
+            cmd->tick_count += TIME_TO_TICKS(interp);
         }
     }
-    logging::Info("LOGGED FROM NEW THREAD");
-    is_done=true;
-    }
+    return ret;
 }
+
 void WriteCmd(IInput *input, CUserCmd *cmd, int sequence_nr)
 {
     // Write the usercmd
@@ -386,10 +446,8 @@ void WriteCmd(IInput *input, CUserCmd *cmd, int sequence_nr)
 }
 
 // This gets called before the other CreateMove, but since we run original first in here all the stuff gets called after normal CreateMove is done
-bool run_many = false;
 DEFINE_HOOKED_METHOD(CreateMoveInput, void, IInput *this_, int sequence_nr, float input_sample_time, bool arg3)
 {
-    
     bSendPackets = reinterpret_cast<bool *>((uintptr_t) __builtin_frame_address(1) - 8);
     // Call original function, includes Normal CreateMove
     original::CreateMoveInput(this_, sequence_nr, input_sample_time, arg3);
