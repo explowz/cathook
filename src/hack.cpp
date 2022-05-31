@@ -44,7 +44,8 @@
 bool hack::game_shutdown = true;
 bool hack::shutdown      = false;
 bool hack::initialized   = false;
-
+extern int current_type_ec;
+extern bool is_ec_ready;
 const std::string &hack::GetVersion()
 {
     static std::string version("Unknown Version");
@@ -397,6 +398,8 @@ free(logname);*/
     }
     
     hack::Hook();
+    pthread_t ec_thread;
+    pthread_create(&ec_thread, NULL, EC::run, NULL);
 }
 
 void hack::Think()
@@ -430,7 +433,7 @@ void hack::Shutdown()
     if (!hack::game_shutdown)
     {
         logging::Info("Running shutdown handlers");
-        EC::run(EC::Shutdown);
+        current_type_ec = EC::Shutdown;
 #if ENABLE_VISUALS
         g_pScreenSpaceEffects->DisableScreenSpaceEffect("_cathook_glow");
 #if EXTERNAL_DRAWING

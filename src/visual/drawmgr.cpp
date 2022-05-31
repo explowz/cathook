@@ -23,7 +23,8 @@
 #include "hack.hpp"
 #include "menu/menu/Menu.hpp"
 #include "drawmgr.hpp"
-
+extern int current_type_ec;
+extern bool is_ec_ready;
 static settings::Boolean info_text{ "hack-info.enable", "true" };
 static settings::Boolean info_text_min{ "hack-info.minimal", "false" };
 
@@ -102,7 +103,8 @@ void DrawCheatVisuals()
     }
     {
         PROF_SECTION(DRAW_WRAPPER);
-        EC::run(EC::Draw);
+        while(!is_ec_ready);
+        current_type_ec = EC::Draw;
     }
     if (CE_GOOD(g_pLocalPlayer->entity) && !g_Settings.bInvalid)
     {

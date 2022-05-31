@@ -15,6 +15,8 @@
 #include "drawmgr.hpp"
 #endif
 extern settings::Boolean die_if_vac;
+extern int current_type_ec;
+extern bool is_ec_ready;
 static Timer checkmmban{};
 namespace hooked_methods
 {
@@ -103,8 +105,8 @@ DEFINE_HOOKED_METHOD(Paint, void, IEngineVGui *this_, PaintMode_t mode)
         
 #endif
         // Call all paint functions
-       
-       EC::run(EC::Paint);
+       while(!is_ec_ready);
+       current_type_ec = EC::Paint;
     
     }
 

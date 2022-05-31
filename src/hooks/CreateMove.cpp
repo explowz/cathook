@@ -27,7 +27,8 @@ settings::Boolean engine_pred{ "misc.engine-prediction", "true" };
 static settings::Boolean debug_projectiles{ "debug.projectiles", "false" };
 static settings::Int fullauto{ "misc.full-auto", "0" };
 static settings::Boolean fuckmode{ "misc.fuckmode", "false" };
-
+extern int current_type_ec;
+extern bool is_ec_ready;
 class CMoveData;
 namespace engine_prediction
 {
@@ -137,9 +138,9 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
     bool time_replaced, ret, speedapplied;
     float curtime_old, servertime, speed, yaw;
     Vector vsilent, ang;
-
     current_user_cmd = cmd;
-    EC::run(EC::CreateMoveEarly);
+    while(!is_ec_ready);
+    current_type_ec = EC::CreateMoveEarly;
     IF_GAME(IsTF2C())
     {
         if (CE_GOOD(LOCAL_W) && minigun_jump && LOCAL_W->m_iClassID() == CL_CLASS(CTFMinigun))
@@ -251,7 +252,8 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
         {
             sendIdentifyMessage(false);
         }
-        EC::run(EC::FirstCM);
+        while(!is_ec_ready);
+        current_type_ec = EC::FirstCM;
         firstcm = false;
     }
     g_Settings.bInvalid = false;
@@ -323,7 +325,8 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
     }
     {
         PROF_SECTION(CM_WRAPPER);
-        EC::run(EC::CreateMove_NoEnginePred);
+        while(!is_ec_ready);
+        current_type_ec = EC::CreateMove_NoEnginePred;
 
         if (engine_pred)
         {
@@ -331,10 +334,14 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
             g_pLocalPlayer->UpdateEye();
         }
 
-        if (hacks::tf2::warp::in_warp)
-            EC::run(EC::CreateMoveWarp);
-        else
-            EC::run(EC::CreateMove);
+        if (hacks::tf2::warp::in_warp){
+            while(!is_ec_ready);
+            current_type_ec = EC::CreateMoveWarp;
+        }
+        else{
+            while(!is_ec_ready);
+            current_type_ec = EC::CreateMove;
+        }
     }
     if (time_replaced)
         g_GlobalVars->curtime = curtime_old;
@@ -476,7 +483,8 @@ DEFINE_HOOKED_METHOD(CreateMoveInput, void, IInput *this_, int sequence_nr, floa
     PROF_SECTION(CreateMoveInput);
 
     // Run EC
-    EC::run(EC::CreateMoveLate);
+    while(!is_ec_ready);
+    current_type_ec = EC::CreateMoveLate;
 
     if (CE_GOOD(LOCAL_E))
     {
