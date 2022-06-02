@@ -23,8 +23,6 @@
 #include "hack.hpp"
 #include "menu/menu/Menu.hpp"
 #include "drawmgr.hpp"
-extern int current_type_ec;
-extern bool is_ec_ready;
 static settings::Boolean info_text{ "hack-info.enable", "true" };
 static settings::Boolean info_text_min{ "hack-info.minimal", "false" };
 
@@ -103,16 +101,13 @@ void DrawCheatVisuals()
     }
     {
         PROF_SECTION(DRAW_WRAPPER);
-        while(!is_ec_ready);
-        current_type_ec = EC::Draw;
+        EC::run(EC::Draw);
     }
     if (CE_GOOD(g_pLocalPlayer->entity) && !g_Settings.bInvalid)
     {
-        IF_GAME(IsTF2())
-        {
+       
             PROF_SECTION(DRAW_skinchanger);
             hacks::tf2::skinchanger::DrawText();
-        }
         Prediction_PaintTraverse();
     }
     {

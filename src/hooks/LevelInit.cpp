@@ -12,8 +12,6 @@
 #include "MiscTemporary.hpp"
 #include "navparser.hpp"
 #include "AntiAntiAim.hpp"
-extern int current_type_ec;
-extern bool is_ec_ready;
 static settings::Boolean halloween_mode{ "misc.force-halloween", "false" };
 static settings::Int skybox_changer{ "misc.skybox-override", "0" };
 extern settings::Boolean random_name;
@@ -54,7 +52,7 @@ DEFINE_HOOKED_METHOD(LevelInit, void, void *this_, const char *name)
     g_IEngine->ClientCmd_Unrestricted("exec cat_matchexec");
     chat_stack::Reset();
     original::LevelInit(this_, name);
-    current_type_ec = EC::LevelInit;
+     EC::run(EC::LevelInit);
 #if ENABLE_IPC
     if (ipc::peer)
     {

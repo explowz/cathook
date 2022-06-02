@@ -1,7 +1,6 @@
 #include "common.hpp"
 #include "HookTools.hpp"
-int current_type_ec=-6;
-bool is_ec_ready=false;
+
 namespace EC
 {
 
@@ -46,26 +45,9 @@ void Unregister(enum ec_types type, const std::string &name)
         }
 }
 
-void *run(void *args)
+void run(enum ec_types type)
 {
-
-    int previous_int=current_type_ec;
-    while(true){
-
-        if(previous_int!=current_type_ec){
-            logging::Info("Comparison %d   %d", previous_int, current_type_ec);
-            is_ec_ready=false;
-            previous_int=current_type_ec;
-            main_loop();
-            
-        }
-        is_ec_ready=true;
-    }
-   
-}
-void main_loop(){
-   int type = current_type_ec;
-    auto &vector = events[type];
+auto &vector = events[type];
     for (auto &i : vector)
     {
 #if ENABLE_PROFILER
@@ -73,7 +55,8 @@ void main_loop(){
 #endif
         i.function();
     }
+   
+}
     
 
-}
 } // namespace EC

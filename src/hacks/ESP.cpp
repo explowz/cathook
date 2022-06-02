@@ -113,7 +113,6 @@ public:
 };
 
 // Unknown
-std::mutex threadsafe_mutex;
 // Storage array for keeping strings and other data
 std::array<ESPData, 2048> data;
 // Storage vars for entities that need to be re-drawn
@@ -334,7 +333,6 @@ static void Draw()
     if (!enable)
         return;
     PROF_SECTION(DRAW_ESP_PERFORMANCE);
-    std::lock_guard<std::mutex> esp_lock(threadsafe_mutex);
     for (auto &i : entities_need_repaint)
     {
         ProcessEntityPT(ENTITY(i.first));
@@ -350,7 +348,7 @@ static void cm()
     if (CE_BAD(LOCAL_E))
         return;
     // Something
-    std::lock_guard<std::mutex> esp_lock(threadsafe_mutex);
+  
 
     // Update entites every 1/5s
     const bool entity_tick = g_GlobalVars->tickcount % TIME_TO_TICKS(0.20f) == 0;

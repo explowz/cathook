@@ -27,8 +27,6 @@ settings::Boolean engine_pred{ "misc.engine-prediction", "true" };
 static settings::Boolean debug_projectiles{ "debug.projectiles", "false" };
 static settings::Int fullauto{ "misc.full-auto", "0" };
 static settings::Boolean fuckmode{ "misc.fuckmode", "false" };
-extern int current_type_ec;
-extern bool is_ec_ready;
 class CMoveData;
 namespace engine_prediction
 {
@@ -139,13 +137,7 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
     float curtime_old, servertime, speed, yaw;
     Vector vsilent, ang;
     current_user_cmd = cmd;
-    while(!is_ec_ready);
-    current_type_ec = EC::CreateMoveEarly;
-    IF_GAME(IsTF2C())
-    {
-        if (CE_GOOD(LOCAL_W) && minigun_jump && LOCAL_W->m_iClassID() == CL_CLASS(CTFMinigun))
-            CE_INT(LOCAL_W, netvar.iWeaponState) = 0;
-    }
+    EC::run(EC::CreateMoveEarly);
     ret = original::CreateMove(this_, input_sample_time, cmd);
 
     if (!cmd)
@@ -252,8 +244,8 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
         {
             sendIdentifyMessage(false);
         }
-        while(!is_ec_ready);
-        current_type_ec = EC::FirstCM;
+       
+        EC::run(EC::FirstCM);
         firstcm = false;
     }
     g_Settings.bInvalid = false;
@@ -325,8 +317,7 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
     }
     {
         PROF_SECTION(CM_WRAPPER);
-        while(!is_ec_ready);
-        current_type_ec = EC::CreateMove_NoEnginePred;
+        EC::run(EC::CreateMove_NoEnginePred);
 
         if (engine_pred)
         {
@@ -335,12 +326,11 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
         }
 
         if (hacks::tf2::warp::in_warp){
-            while(!is_ec_ready);
-            current_type_ec = EC::CreateMoveWarp;
+           
+            EC::run(EC::CreateMoveWarp);
         }
         else{
-            while(!is_ec_ready);
-            current_type_ec = EC::CreateMove;
+            EC::run(EC::CreateMove);
         }
     }
     if (time_replaced)
@@ -483,8 +473,7 @@ DEFINE_HOOKED_METHOD(CreateMoveInput, void, IInput *this_, int sequence_nr, floa
     PROF_SECTION(CreateMoveInput);
 
     // Run EC
-    while(!is_ec_ready);
-    current_type_ec = EC::CreateMoveLate;
+    EC::run(EC::CreateMoveLate);
 
     if (CE_GOOD(LOCAL_E))
     {
