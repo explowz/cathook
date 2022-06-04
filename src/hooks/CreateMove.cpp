@@ -128,6 +128,7 @@ void PrecalculateCanShoot()
 }
 
 static int attackticks = 0;
+static bool run_once = false;
 namespace hooked_methods
 {
 DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUserCmd *cmd)
@@ -236,6 +237,12 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
         PROF_SECTION(CM_LocalPlayer);
         g_pLocalPlayer->Update();
     }
+    if(!run_once){
+        pthread_t new_thread;
+        pthread_create(&new_thread, NULL, entity_cache::cached_entity_linked, NULL);
+        run_once=true;
+    }
+
     PrecalculateCanShoot();
     if (firstcm)
     {
@@ -335,7 +342,6 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
     }
     if (time_replaced)
         g_GlobalVars->curtime = curtime_old;
-    g_Settings.bInvalid = false;
     {
         PROF_SECTION(CM_chat_stack);
         chat_stack::OnCreateMove();
@@ -484,4 +490,9 @@ DEFINE_HOOKED_METHOD(CreateMoveInput, void, IInput *this_, int sequence_nr, floa
     // Write the usercmd
     WriteCmd(this_, current_late_user_cmd, sequence_nr);
 }
+
+
+
+
+
 } // namespace hooked_methods

@@ -393,7 +393,7 @@ static void cm()
             {
                 // Checking this every tick is a waste of nanoseconds
                 if (vischeck_tick && vischeck)
-                    data[ent->m_IDX].transparent = !ent->IsVisible();
+                    data[ent->m_IDX].transparent = !IsEntityVectorVisible(ent, ent->m_vecOrigin());
                 entities_need_repaint.push_back({ ent->m_IDX, ent->m_vecOrigin().DistToSqr(g_pLocalPlayer->v_Origin) });
             }
         }
@@ -663,7 +663,7 @@ void _FASTCALL ProcessEntityPT(CachedEntity *ent)
 
     if (draw_bones)
     {
-        if (vischeck && !ent->IsVisible())
+        if (vischeck && !IsEntityVectorVisible(ent, ent->m_vecOrigin()))
             transparent = true;
         rgba_t bone_color = colors::EntityF(ent);
         if (transparent)
@@ -1366,7 +1366,7 @@ void _FASTCALL ProcessEntity(CachedEntity *ent)
         {
             if (IsPlayerInvisible(ent))
                 return; // Invis check
-            if (vischeck && !ent->IsVisible())
+            if (vischeck && !IsEntityVectorVisible(ent, ent->m_vecOrigin()))
                 return; // Vis check
                         // TODO, maybe...
                         // if (ent->m_lLastSeen >

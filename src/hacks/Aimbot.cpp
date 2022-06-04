@@ -124,6 +124,7 @@ void spectatorUpdate()
 }
 
 bool playerTeamCheck(CachedEntity *entity)
+
 {
     return (int) teammates == 2 || (entity->m_bEnemy() && !teammates) || (!entity->m_bEnemy() && teammates) || (CE_GOOD(LOCAL_W) && LOCAL_W->m_iClassID() == CL_CLASS(CTFCrossbow) && entity->m_iHealth() < entity->m_iMaxHealth());
 }
