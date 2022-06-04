@@ -92,10 +92,6 @@ bool EntityHitboxCache::VisibilityCheck(int id)
         return false;
     if (m_VisCheckValidationFlags[id])
         return m_VisCheck[id];
-    // TODO corners
-    hitbox = GetHitbox(id);
-    if (!hitbox)
-        return false;
     m_VisCheck[id]                = (IsEntityVectorVisible(parent_ref, hitbox->center, true));
     m_VisCheckValidationFlags[id] = true;
     return m_VisCheck[id];
