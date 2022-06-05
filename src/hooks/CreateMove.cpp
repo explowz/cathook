@@ -237,11 +237,7 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
         PROF_SECTION(CM_LocalPlayer);
         g_pLocalPlayer->Update();
     }
-    if(!run_once){
-        pthread_t new_thread;
-        pthread_create(&new_thread, NULL, entity_cache::cached_entity_linked, NULL);
-        run_once=true;
-    }
+   
 
     PrecalculateCanShoot();
     if (firstcm)
@@ -436,6 +432,11 @@ DEFINE_HOOKED_METHOD(CreateMove, bool, void *this_, float input_sample_time, CUs
             float interp = MAX(cl_interp->GetFloat(), cl_interp_ratio->GetFloat() / pUpdateRate->GetFloat());
             cmd->tick_count += TIME_TO_TICKS(interp);
         }
+    }
+     if(!run_once){
+        pthread_t new_thread;
+        pthread_create(&new_thread, NULL, entity_cache::cached_entity_linked, NULL);
+        run_once=true;
     }
     return ret;
 }

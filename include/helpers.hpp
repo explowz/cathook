@@ -106,6 +106,7 @@ Vector VischeckCorner(CachedEntity *player, CachedEntity *target, float maxdist,
 std::pair<Vector, Vector> VischeckWall(CachedEntity *player, CachedEntity *target, float maxdist, bool checkWalkable);
 float vectorMax(Vector i);
 Vector vectorAbs(Vector i);
+int GetScoreForEntity_aim(CachedEntity *entity);
 bool canReachVector(Vector loc, Vector dest = { 0, 0, 0 });
 
 bool LineIntersectsBox(Vector &bmin, Vector &bmax, Vector &lmin, Vector &lmax);

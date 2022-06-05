@@ -763,7 +763,7 @@ CachedEntity *RetrieveBestTarget(bool aimkey_state)
                 {
                 case 0: // Smart Priority
                 {
-                    scr = GetScoreForEntity(ent);
+                    scr = GetScoreForEntity_aim(ent);
                     break;
                 }
                 case 1: // Fov Priority

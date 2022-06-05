@@ -3093,7 +3093,7 @@ void CIKContext::AddDependencies(mstudioseqdesc_t &seqdesc, int iSequence, float
     if (seqdesc.numikrules == 0)
         return;
 
-    ikcontextikrule_t ikrule;
+    ikcontextikrule_t ikrule = {};
 
     Assert(flWeight >= 0.0f && flWeight <= 1.0f);
     // This shouldn't be necessary, but the Assert should help us catch whoever is screwing this up
@@ -3780,7 +3780,7 @@ void CIKContext::AutoIKRelease(void)
             }
             if (pTarget->error.ramp > 0.0)
             {
-                ikcontextikrule_t ikrule;
+                ikcontextikrule_t ikrule = {};
 
                 ikrule.chain        = pTarget->chain;
                 ikrule.bone         = 0;

@@ -67,116 +67,6 @@ void CachedEntity::Update()
         GetPlayerInfo(m_IDX, &player_info);
 }
 
-int IsVisible(CachedEntity* current_ent)
-{
-   
-        if(CE_BAD(LOCAL_W)){
-            return -1;
-        }
-        int player_weapon_mode = g_pLocalPlayer->weapon_mode;
-        int player_weapon = g_pLocalPlayer->weapon()->m_iClassID();
-        int determine_optimal_hitboxes = determine_hitboxes(player_weapon_mode, player_weapon);
-        if(determine_optimal_hitboxes == -1){
-            return -1;
-        }
-        int determine_index;
-        
-      auto optimal_hitboxes = optimal_array_switch(determine_optimal_hitboxes, &determine_index);
-        const int size_of_arr = sizeof(optimal_hitboxes);
-        if(determine_index == NULL){
-            return -1;
-        }
-        for (int i = 0; i < determine_index; i++)
-        {
-            logging::Info("YOOO INDEX %d", determine_index);
-            logging::Info("YOOO INDEX of ARR %d", optimal_hitboxes[i]); 
-          
-          Vector get_vec= current_ent->hitboxes.GetHitbox(optimal_hitboxes[i])->center;
-            if ( IsEntityVectorVisible(current_ent, get_vec))
-            {
-                return i;
-            }
-            
-        }
-        return -1;
-}
-
-
-const int* optimal_array_switch(int determine_optimal, int *index_size){
-    switch(determine_optimal){
-        case 0:{
-            static const int optimal_hitboxes[] = { hitbox_t::head, hitbox_t::spine_1, hitbox_t::hand_R, hitbox_t::lowerArm_R };
-            *index_size =sizeof(optimal_hitboxes)/4;
-            return optimal_hitboxes;
-        }
-        case 1:{
-            static const int optimal_hitboxes[]= {hitbox_t::spine_1, hitbox_t::pelvis, hitbox_t::lowerArm_L, hitbox_t::lowerArm_R, hitbox_t::head, hitbox_t::spine_2};
-            *index_size =sizeof(optimal_hitboxes)/4;
-            return optimal_hitboxes;
-        }
-        case 2:{
-            static const int optimal_hitboxes[] = {hitbox_t::foot_L, hitbox_t::foot_R,hitbox_t::spine_1, hitbox_t::hip_L, hitbox_t::hip_R };
-            *index_size =sizeof(optimal_hitboxes)/4;
-            return optimal_hitboxes;
-        }
-        case 3:{
-            static const int optimal_hitboxes[] = {hitbox_t::head, hitbox_t::spine_1, hitbox_t::upperArm_L, hitbox_t::spine_3};
-            *index_size =sizeof(optimal_hitboxes)/4;
-            return optimal_hitboxes;
-        }
-        case 4:{
-            static const int optimal_hitboxes[]= {hitbox_t::spine_1, hitbox_t::spine_0, hitbox_t::spine_3};
-            *index_size =sizeof(optimal_hitboxes)/4;
-            return optimal_hitboxes;
-        }
-        default:{
-            *index_size=NULL;
-            return NULL;
-        }
-
-
-
-    }
-
-
-
-}
-int determine_hitboxes(int weapon_mode, int player_weapon){
-    switch(weapon_mode){
-        case weapon_hitscan:{
-            if(IsAmbassador(g_pLocalPlayer->weapon()) ||g_pLocalPlayer->holding_sniper_rifle){
-                return 0;
-            }
-            else{
-                return 1;
-            }
-        }
-        case weapon_throwable:
-        case weapon_projectile:{
-        if( player_weapon == CL_CLASS(CTFCompoundBow)){
-            return 3;
-        }    
-        else{
-            return 2;
-        }
-
-
-
-        }
-
-        case weapon_melee:{
-            return 4;
-        }
-    default:{
-        return -1;
-    }    
-
-
-    }
-
-
-
-}
 
 std::optional<Vector> CachedEntity::m_vecDormantOrigin()
 {
@@ -186,6 +76,141 @@ std::optional<Vector> CachedEntity::m_vecDormantOrigin()
     if (vec)
         return *vec;
     return std::nullopt;
+}
+
+namespace entity_cache
+{
+CachedEntity array[MAX_ENTITIES]{};
+
+void Update()
+{
+    max = g_IEntityList->GetHighestEntityIndex();
+    if (max >= MAX_ENTITIES)
+        max = MAX_ENTITIES - 1;
+    for (int i = 0; i <= max; i++)
+    {
+        array[i].Update();
+        if (CE_GOOD((&array[i]))){
+            array[i].hitboxes.UpdateBones();
+        }
+
+    }
+}
+
+void Invalidate()
+{
+    for (auto &ent : array)
+    {
+        // pMuch useless line!
+        // ent.m_pEntity = nullptr;
+        ent.Reset();
+    }
+}
+
+void Shutdown()
+{
+    for (auto &ent : array)
+    {
+        ent.Reset();
+        ent.hitboxes.Reset();
+    }
+}
+void* cached_entity_linked(void* args){
+    entity_linked_list* head = NULL; 
+    head = (struct entity_linked_list*)malloc(sizeof(struct entity_linked_list));
+    head->target_score=-1;
+    entity_linked_list **tail = &head;
+    
+    add_players(tail,0, 36);
+    
+  while(true){
+      int max_clients = g_GlobalVars->maxClients;
+      for(int i=0; i<=g_IEngine->GetMaxClients(); i++){
+          logging::Info("ENTED LOOP");
+          auto current_int = ENTITY(i);
+
+          
+          if(CE_GOOD(current_int) && current_int->m_bAlivePlayer() && !CE_INVALID(current_int) && current_int->m_Type() == ENTITY_PLAYER){          
+                logging::Info("FIRST CHECK GOOD");
+          int current_hitbox = IsVisible(current_int);
+          logging::Info("HITBOX GOOD");
+          if(current_hitbox!=-1){
+              int score_for_ent = GetScoreForEntity(current_int);
+              head = sort_linked_list(head, score_for_ent,current_hitbox);
+                logging::Info("YOOO HITBOX: %d, and SCORE %d", current_hitbox, score_for_ent);
+              
+          }
+      }
+      }
+      logging::Info("Current Head VALUE: %d", head->target_score);
+
+
+
+  }
+}
+entity_linked_list* sort_linked_list(entity_linked_list* head, int score_For_ent, int current_hitbox){
+
+entity_linked_list* temp = head;
+if(head->target_score==NULL){
+    head->target_score=score_For_ent;
+    head->best_hitbox=current_hitbox;
+    return head;
+}   
+else if(head->target_score<score_For_ent){
+    int curr_head_score= head->target_score;
+    int curr_hitbox = head->best_hitbox;
+    head->target_score=score_For_ent;
+    head->best_hitbox=current_hitbox;
+    while(temp->next!= NULL){
+    int move_this = temp->next->target_score;
+    int local_hitbox = temp->next->best_hitbox;
+    temp->next->target_score=curr_head_score;
+    temp->next->best_hitbox=curr_hitbox;
+    curr_hitbox=local_hitbox;
+    curr_head_score=move_this;
+   temp=temp->next;
+   }
+   return head;
+
+}
+else{
+while(temp->next!=NULL && score_For_ent<temp->next->target_score){
+    temp=temp->next;
+};
+if(temp->next==NULL){
+    temp->target_score=score_For_ent;
+    temp->target_score=current_hitbox;
+     return head;
+    
+}
+else{
+int less_than = temp->next->target_score;
+  int local_hitbox = temp->next->best_hitbox;
+temp->next->target_score=score_For_ent;
+temp->next->best_hitbox=current_hitbox;
+temp = temp->next;
+ while(temp->next != NULL){
+    int move_this = temp->next->target_score;
+    int ref_hitbox = temp->next->best_hitbox;
+    temp->next->target_score=less_than;
+    temp->next->best_hitbox=local_hitbox;
+    local_hitbox=ref_hitbox;
+    less_than=move_this;
+   temp=temp->next;
+}
+}}
+
+return head;
+}
+void add_players(entity_linked_list** tail, int local_max, int current_max){
+    while(local_max<current_max){
+       entity_linked_list* new_node = (struct entity_linked_list*)malloc(sizeof(struct entity_linked_list));
+       new_node->target_score=-5;
+        new_node->next = NULL;
+         *tail = new_node;
+     tail = &(*tail)->next;
+     local_max++;
+    }
 }
 int GetScoreForEntity(CachedEntity *entity)
 {
@@ -278,128 +303,118 @@ int GetScoreForEntity(CachedEntity *entity)
         total = 999;
     return total;
 }
-entity_linked_list* global_head;
-namespace entity_cache
-{
-CachedEntity array[MAX_ENTITIES]{};
 
-void Update()
+int IsVisible(CachedEntity* current_ent)
 {
-    max = g_IEntityList->GetHighestEntityIndex();
-    for (int i = 0; i <= max; i++)
-    {
-        array[i].Update();
-        if (CE_GOOD((&array[i]))){
-            array[i].hitboxes.UpdateBones();
+   
+        if(CE_GOOD(LOCAL_E) && LOCAL_E->m_bAlivePlayer() && LOCAL_E != current_ent && CE_GOOD(LOCAL_W)){
+        int player_weapon_mode = g_pLocalPlayer->weapon_mode;
+        int player_weapon = LOCAL_W->m_iClassID();
+        if(player_weapon != NULL && player_weapon_mode != NULL){
+        int determine_optimal_hitboxes = determine_hitboxes(player_weapon_mode, player_weapon);
+        if(determine_optimal_hitboxes == -1){
+            return -1;
+        }
+        int determine_index;
+        
+      auto optimal_hitboxes = optimal_array_switch(determine_optimal_hitboxes, &determine_index);
+     if(determine_index == NULL || optimal_hitboxes==NULL){
+            return -1;
+        }
+        const int size_of_arr = sizeof(optimal_hitboxes);
+       
+        for (int i = 0; i < determine_index-1; i++)
+        {  
+            auto hb = current_ent->hitboxes.GetHitbox(optimal_hitboxes[i]);
+            trace_t trace;
+            if ( IsEntityVectorVisible(current_ent, hb->center,true, MASK_SHOT_HULL, &trace))
+            {
+                if(trace.DidHit()){
+                    return i;
+                }
+            }
+            
+        }
+        }
+        }
+        return -1;
+}
+
+
+const int* optimal_array_switch(int determine_optimal, int *index_size){
+    switch(determine_optimal){
+        case 0:{
+            static const int optimal_hitboxes[] = { hitbox_t::head, hitbox_t::spine_1, hitbox_t::hand_R, hitbox_t::lowerArm_R };
+            *index_size =sizeof(optimal_hitboxes)/4;
+            return optimal_hitboxes;
+        }
+        case 1:{
+            static const int optimal_hitboxes[]= {hitbox_t::spine_1, hitbox_t::pelvis, hitbox_t::lowerArm_L, hitbox_t::lowerArm_R, hitbox_t::head, hitbox_t::spine_2};
+            *index_size =sizeof(optimal_hitboxes)/4;
+            return optimal_hitboxes;
+        }
+        case 2:{
+            static const int optimal_hitboxes[] = {hitbox_t::foot_L, hitbox_t::foot_R,hitbox_t::spine_1, hitbox_t::hip_L, hitbox_t::hip_R };
+            *index_size =sizeof(optimal_hitboxes)/4;
+            return optimal_hitboxes;
+        }
+        case 3:{
+            static const int optimal_hitboxes[] = {hitbox_t::head, hitbox_t::spine_1, hitbox_t::upperArm_L, hitbox_t::spine_3};
+            *index_size =sizeof(optimal_hitboxes)/4;
+            return optimal_hitboxes;
+        }
+        case 4:{
+            static const int optimal_hitboxes[]= {hitbox_t::spine_1, hitbox_t::spine_0, hitbox_t::spine_3};
+            *index_size =sizeof(optimal_hitboxes)/4;
+            return optimal_hitboxes;
+        }
+        default:{
+            *index_size=NULL;
+            return NULL;
         }
 
+
+
     }
-}
 
-void Invalidate()
-{
-    for (auto &ent : array)
-    {
-        // pMuch useless line!
-        // ent.m_pEntity = nullptr;
-        ent.Reset();
+
+
+}
+int determine_hitboxes(int weapon_mode, int player_weapon){
+    switch(weapon_mode){
+        case weapon_hitscan:{
+            if(IsAmbassador(g_pLocalPlayer->weapon()) ||g_pLocalPlayer->holding_sniper_rifle){
+                return 0;
+            }
+            else{
+                return 1;
+            }
+        }
+        case weapon_throwable:
+        case weapon_projectile:{
+        if( player_weapon == CL_CLASS(CTFCompoundBow)){
+            return 3;
+        }    
+        else{
+            return 2;
+        }
+
+
+
+        }
+
+        case weapon_melee:{
+            return 4;
+        }
+    default:{
+        return -1;
+    }    
+
+
     }
-}
-
-void Shutdown()
-{
-    for (auto &ent : array)
-    {
-        ent.Reset();
-        ent.hitboxes.Reset();
-    }
-}
-void* cached_entity_linked(void* args){
-    entity_linked_list* head = NULL; 
-    head = (struct entity_linked_list*)malloc(sizeof(struct entity_linked_list));
-    head->target_score=-1;
-    entity_linked_list **tail = &head;
-    add_players(tail,0, MAX_ENTITIES);
-    
-  while(true){
-      for(int i=0; i<MAX_ENTITIES; i++){
-          
-          auto current_int = ENTITY(i);
-          if (current_int->m_Type() == ENTITY_PLAYER){
-            logging::Info("%d", i);
-          int current_hitbox = IsVisible(current_int);
-          if(current_hitbox!=-1){
-              int score_for_ent = GetScoreForEntity(current_int);
-              head = sort_linked_list(head, score_for_ent,current_hitbox);
-
-              }
-          }
-      }
-    logging::Info("%d", head->target_score);
 
 
-
-  }
-}
-entity_linked_list* sort_linked_list(entity_linked_list* head, int score_For_ent, int current_hitbox){
-
-entity_linked_list* temp = head;
-if(head->target_score==NULL){
-    head->target_score=score_For_ent;
-    head->best_hitbox=current_hitbox;
-    return head;
-}   
-else if(head->target_score<score_For_ent){
-    int curr_head_score= head->target_score;
-    int curr_hitbox = head->best_hitbox;
-    head->target_score=score_For_ent;
-    head->best_hitbox=current_hitbox;
-    if(temp->next->target_score==NULL){
-        temp->next->target_score=curr_head_score;
-        temp->next->best_hitbox=curr_hitbox;
-    }
-    while(temp->next->target_score != NULL){
-    int move_this = temp->next->target_score;
-    int local_hitbox = temp->next->best_hitbox;
-    temp->next->target_score=curr_head_score;
-    temp->next->best_hitbox=curr_hitbox;
-    curr_hitbox=local_hitbox;
-    curr_head_score=move_this;
-   temp=temp->next;
-   }
 
 }
-else{
-while(temp->next->target_score!=NULL && score_For_ent<temp->next->target_score){
-    temp=temp->next;
-};
-int less_than = temp->next->target_score;
-  int local_hitbox = temp->next->best_hitbox;
-temp->next->target_score=score_For_ent;
-temp->next->best_hitbox=current_hitbox;
-temp = temp->next;
- while(temp->next->target_score != NULL){
-    int move_this = temp->next->target_score;
-    int ref_hitbox = temp->next->best_hitbox;
-    temp->next->target_score=less_than;
-    temp->next->best_hitbox=local_hitbox;
-    local_hitbox=ref_hitbox;
-    less_than=move_this;
-   temp=temp->next;
-}
-}
-
-return temp;
-}
-void add_players(entity_linked_list** tail, int local_max, int current_max){
-    while(local_max<current_max){
-       entity_linked_list* new_node = (struct entity_linked_list*)malloc(sizeof(struct entity_linked_list));
-        new_node->next = NULL;
-         *tail = new_node;
-     tail = &(*tail)->next;
-     local_max++;
-    }
-}
-
 int max = 0;
 } // namespace entity_cache
