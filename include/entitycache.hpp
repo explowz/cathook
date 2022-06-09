@@ -33,8 +33,6 @@ struct model_t;
 struct mstudiohitboxset_t;
 struct mstudiobbox_t;
 
-
-
 constexpr int MAX_STRINGS = 16;
 
 #define PROXY_ENTITY true
@@ -64,7 +62,6 @@ constexpr int MAX_STRINGS = 16;
 #define ENTITY(idx) (&entity_cache::Get(idx))
 
 bool IsProjectileACrit(CachedEntity *ent);
-
 class CachedEntity
 {
 public:
@@ -73,6 +70,7 @@ public:
     ~CachedEntity();
 
     __attribute__((hot)) void Update();
+    bool IsVisible();
     void Reset();
     __attribute__((always_inline, hot, const)) IClientEntity *InternalEntity() const
     {
@@ -187,7 +185,8 @@ public:
         return m_iClassID() == CL_CLASS(CTFGrenadePipebombProjectile) || m_iClassID() == CL_CLASS(CTFProjectile_Cleaver) || m_iClassID() == CL_CLASS(CTFProjectile_Jar) || m_iClassID() == CL_CLASS(CTFProjectile_JarMilk);
     };
 
-   
+    bool m_bAnyHitboxVisible{ false };
+    bool m_bVisCheckComplete{ false };
 
     k_EItemType m_ItemType()
     {
@@ -229,22 +228,5 @@ inline CachedEntity &Get(int idx)
 void Update();
 void Invalidate();
 void Shutdown();
-void* cached_entity_linked(void* args);
-int IsVisible(CachedEntity* current_ent);
- int determine_hitboxes(int weapon_mode, int player_weapon);
- int GetScoreForEntity(CachedEntity *entity);
-
-const int* optimal_array_switch(int determine_optimal, int *index_size);
-struct entity_linked_list{
-    int best_hitbox;
-    CachedEntity* current_ent;
-    int target_score;
-    struct entity_linked_list* next;
-};
-entity_linked_list* sort_linked_list(entity_linked_list* head, int score_For_ent, int current_hitbox);
-void add_players(entity_linked_list** tail, int local_max, int current_max);
-
-
-
 extern int max;
 } // namespace entity_cache

@@ -362,8 +362,6 @@ bool projectileAimbotRequired;
 // for current frame, to avoid performing them again
 AimbotCalculatedData_s calculated_data_array[2048]{};
 // The main "loop" of the aimbot.
-bool already_created;
-pthread_t pthread_id;
 static void CreateMove()
 {
     enable   = *normal_enable;
