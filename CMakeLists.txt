@@ -23,7 +23,7 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CMAKE_BUILD_TYPE_VALUES})
 
 project(cathook VERSION 0.0.1)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 add_library(cathook SHARED "")
 
 set(GameSpecific 1 CACHE BOOL "Build for specific target game (As opposed to universal, but slower, lib)")
@@ -68,7 +68,7 @@ set(EnableIPC 1 CACHE BOOL "Enable IPC")
 set(DataPath "/opt/cathook/data" CACHE FILEPATH "Data location")
 set(VACBypass 0 CACHE BOOL "Textmode VAC bypass")
 set(EnableTextmodeStdin 0 CACHE BOOL "Textmode Stdin -> Console bridge (EXPERIMENTAL)")
-set(EnableWarnings 0 CACHE BOOL "Enable compile warnings")
+set(EnableWarnings 1 CACHE BOOL "Enable compile warnings")
 set(EnableNullNexus 1 CACHE BOOL "Enable NullNexus chat and other features")
 set(EnableLogging 1 CACHE BOOL "Enable logging to /tmp/")
 set(EnableClip 1 CACHE BOOL "Enable anti electron/chromium freezing")
@@ -191,7 +191,7 @@ target_include_directories(cathook SYSTEM PRIVATE
         "external/source-sdk-2013-headers/mp/src")
 
 if(EnableWarnings)
-    target_compile_options(cathook PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess -Wno-strict-aliasing -Wno-sign-compare)
+    target_compile_options(cathook PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-class-memaccess -Wno-strict-aliasing -Wno-sign-compare -O3)
 else()
     target_compile_options(cathook PRIVATE -w)
 endif()
