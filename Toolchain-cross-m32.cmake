@@ -1,5 +1,5 @@
-SET(CMAKE_C_FLAGS             "-m32" CACHE STRING "C compiler flags"   FORCE)
-SET(CMAKE_CXX_FLAGS           "-m32" CACHE STRING "C++ compiler flags" FORCE)
+SET(CMAKE_C_FLAGS             "-Ofast -m32" CACHE STRING "C compiler flags"   FORCE)
+SET(CMAKE_CXX_FLAGS           "-Ofast -m32" CACHE STRING "C++ compiler flags" FORCE)
 
 SET(LIB32 /usr/lib) # Fedora
 
