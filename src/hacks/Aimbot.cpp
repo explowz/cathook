@@ -544,10 +544,8 @@ static void CreateMove()
         break;
     }
 
-    if (only_can_shoot && g_pLocalPlayer->weapon()->m_iClassID() != CL_CLASS(CTFLaserPointer))
+    if (only_can_shoot && g_pLocalPlayer->weapon()->m_iClassID() != CL_CLASS(CTFLaserPointer) && g_pLocalPlayer->weapon()->m_iClassID() != CL_CLASSCL_CLASS(CTFMinigun)) 
     {
-        if (p_fix && g_pLocalPlayer->weapon()->m_iClassID() != CL_CLASS(CTFMinigun))
-            DoAutoshoot();
         // Handle Huntsman
         if (g_pLocalPlayer->weapon()->m_iClassID() == CL_CLASS(CTFCompoundBow))
         {
