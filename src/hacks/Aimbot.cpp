@@ -543,6 +543,106 @@ static void CreateMove()
         }
         break;
     }
+
+    if (only_can_shoot && g_pLocalPlayer->weapon()->m_iClassID() != CL_CLASS(CTFLaserPointer))
+    {
+        if (p_fix && g_pLocalPlayer->weapon()->m_iClassID() != CL_CLASS(CTFMinigun))
+            DoAutoshoot();
+        // Handle Huntsman
+        if (g_pLocalPlayer->weapon()->m_iClassID() == CL_CLASS(CTFCompoundBow))
+        {
+            bool release = false;
+            if (autoshoot)
+                current_user_cmd->buttons |= IN_ATTACK;
+            // Grab time when charge began
+            float begincharge = CE_FLOAT(g_pLocalPlayer->weapon(), netvar.flChargeBeginTime);
+            float charge      = g_GlobalVars->curtime - begincharge;
+            if (!begincharge)
+                charge = 0.0f;
+            int damage        = std::floor(50.0f + 70.0f * fminf(1.0f, charge));
+            int charge_damage = std::floor(50.0f + 70.0f * fminf(1.0f, charge)) * 3.0f;
+            if (HasCondition<TFCond_Slowed>(LOCAL_E) && (autoshoot || !(current_user_cmd->buttons & IN_ATTACK)) && (!wait_for_charge || (charge >= 1.0f || damage >= target_entity->m_iHealth() || charge_damage >= target_entity->m_iHealth())))
+                release = true;
+            // Shoot projectile
+            if (release)
+            {
+                DoAutoshoot();
+                Aim(target_entity);
+            }
+        }
+        // Loose cannon
+        else if (LOCAL_W->m_iClassID() == CL_CLASS(CTFCannon))
+        {
+            // TODO: add logic for charge time
+            bool release = false;
+            if (autoshoot)
+                current_user_cmd->buttons |= IN_ATTACK;
+            float detonate_time = CE_FLOAT(LOCAL_W, netvar.flDetonateTime);
+            // Currently charging up
+            if (detonate_time > g_GlobalVars->curtime)
+            {
+                if (wait_for_charge)
+                {
+                    // Shoot when a straight shot would result in only 100ms left on fuse upon target hit
+                    float best_charge = PredictEntity(target_entity, false).DistTo(g_pLocalPlayer->v_Eye) / cur_proj_speed + 0.1;
+                    if (detonate_time - g_GlobalVars->curtime <= best_charge)
+                        release = true;
+                }
+                else
+                    release = true;
+            }
+            if (release)
+            {
+                DoAutoshoot();
+                Aim(target_entity);
+            }
+        }
+        // Not release type weapon
+        else if (LOCAL_W->m_iClassID() == CL_CLASS(CTFPipebombLauncher))
+        {
+            float chargebegin = CE_FLOAT(LOCAL_W, netvar.flChargeBeginTime);
+            float chargetime  = g_GlobalVars->curtime - chargebegin;
+
+            DoAutoshoot();
+            static bool currently_charging_pipe = false;
+
+            // Grenade started charging
+            if (chargetime < 6.0f && chargetime && chargebegin)
+                currently_charging_pipe = true;
+
+            // Grenade was released
+            if (!(current_user_cmd->buttons & IN_ATTACK) && currently_charging_pipe)
+            {
+                currently_charging_pipe = false;
+                Aim(target_entity);
+            }
+            else
+                return;
+
+            // Not release type weapon
+        }
+        else if (GetWeaponMode() == weapon_melee)
+        {
+            DoAutoshoot();
+            if (g_pLocalPlayer->weapon_melee_damage_tick)
+                Aim(target_entity);
+        }
+        else if (CanShoot() && CE_INT(LOCAL_W, netvar.m_iClip1) != 0)
+        {
+            if (g_pLocalPlayer->weapon()->m_iClassID() == CL_CLASS(CTFMinigun))
+            {
+                if (CE_INT(g_pLocalPlayer->weapon(), netvar.iWeaponState) > 1)
+                    Aim(target_entity);
+                
+                DoAutoshoot(target_entity);
+            }
+            else
+            {
+                Aim(target_entity);
+                DoAutoshoot(target_entity);
+            }
+        }
+    }
     }
 }
 
