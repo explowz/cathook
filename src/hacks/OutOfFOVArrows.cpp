@@ -2,14 +2,13 @@
  * OutOfFOVArrows.cpp
  *
  *  Created on: Sep 9, 2021
- *      Author: user
+ *      Author: Bintr
  */
-
-// UNFINISHED
 
 #include <settings/Bool.hpp>
 #include "common.hpp"
 #include "PlayerTools.hpp"
+#include "OverrideView.hpp"
 
 namespace hacks::outoffovarrows
 {
@@ -18,15 +17,12 @@ static settings::Float angle{ "oof-arrows.angle", "5" };
 static settings::Float length{ "oof-arrows.length", "5" };
 static settings::Float min_dist{ "oof-arrows.min-dist", "0" };
 static settings::Float max_dist{ "oof-arrows.max-dist", "0" };
+static settings::Boolean ignore_friends{ "oof-arrows.ignore-friends", "true" };
+static settings::Boolean enemy_team_colors{ "oof-arrows.enemy-team-colors", "true" };
 
-bool warning_triggered  = false;
-bool backstab_triggered = false;
-float last_say          = 0.0f;
-Timer lastVoicemenu{};
-
-bool ShouldRun(CBaseEntity *pLocal)
+bool ShouldRun()
 {
-    if (!enable || g_IEngineVGui->IsGameUIVisible())
+    if (!*enable || g_IEngineVGui->IsGameUIVisible())
         return false;
 
     if (g_pLocalPlayer->life_state)
@@ -35,7 +31,7 @@ bool ShouldRun(CBaseEntity *pLocal)
     return true;
 }
 
-void Draw(const Vector &vecFromPos, const Vector &vecToPos, rgba_t color)
+void DrawArrowTo(const Vector &vecFromPos, const Vector &vecToPos, rgba_t color)
 {
     color.a                = 150;
     auto GetClockwiseAngle = [&](const Vector &vecViewAngle, const Vector &vecAimAngle) -> float
@@ -52,7 +48,12 @@ void Draw(const Vector &vecFromPos, const Vector &vecToPos, rgba_t color)
     auto MapFloat = [&](float x, float in_min, float in_max, float out_min, float out_max) -> float { return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; };
 
     Vector vecAngleTo = CalcAngle(vecFromPos, vecToPos);
-    g_IEngine->GetViewAngles(vecViewAngle);
+
+    QAngle qAngle;
+    Vector vecViewAngle;
+
+    g_IEngine->GetViewAngles(qAngle);
+    vecViewAngle = QAngleToVector(qAngle);
 
     const float deg  = GetClockwiseAngle(vecViewAngle, vecAngleTo);
     const float xrot = cos(deg - PI / 2);
@@ -66,7 +67,7 @@ void Draw(const Vector &vecFromPos, const Vector &vecToPos, rgba_t color)
     const float x2 = ((ScreenWidth * 0.15) + 15.0f) * xrot;
     const float y2 = ((ScreenWidth * 0.15) + 15.0f) * yrot;
 
-    float arrow_angle  = DEG2RAD(angle);
+    float arrow_angle  = DEG2RAD(*angle);
     float arrow_length = *length;
 
     const Vector line{ x2 - x1, y2 - y1, 0.0f };
@@ -81,81 +82,70 @@ void Draw(const Vector &vecFromPos, const Vector &vecToPos, rgba_t color)
     const Vector left     = point_on_line + rotation;
     const Vector right    = point_on_line - rotation;
 
-    float cx = static_cast<float>(ScreenWidth / 2);
-    float cy = static_cast<float>(ScreenHeight / 2);
+    auto cx = static_cast<float>(ScreenWidth / 2);
+    auto cy = static_cast<float>(ScreenHeight / 2);
 
-    float fMap       = clamp(MapFloat(vecFromPos.DistTo(vecToPos), max_dist, min_dist, 0.0f, 1.0f), 0.0f, 1.0f);
+    float fMap       = clamp(MapFloat(vecFromPos.DistTo(vecToPos), *max_dist, *min_dist, 0.0f, 1.0f), 0.0f, 1.0f);
     rgba_t HeatColor = color;
     HeatColor.a      = static_cast<byte>(fMap * 255.0f);
 
-    g_Draw.Line(cx + x2, cy + y2, cx + left.x, cy + left.y, HeatColor);
-    g_Draw.Line(cx + x2, cy + y2, cx + right.x, cy + right.y, HeatColor);
-    g_Draw.Line(cx + left.x, cy + left.y, cx + right.x, cy + right.y, HeatColor);
+    draw::Line(cx + x2, cy + y2, cx + left.x, cy + left.y, HeatColor, 0.5);
+    draw::Line(cx + x2, cy + y2, cx + right.x, cy + right.y, HeatColor, 0.5);
+    draw::Line(cx + left.x, cy + left.y, cx + right.x, cy + right.y, HeatColor, 0.5);
 }
 
-#if ENABLE_VISUALS
-static InitRoutine EC(
-    []()
-    {
-        EC::Register(EC::Draw, Draw, "outoffovarrows", EC::average);
-    });
-#endif
-} // namespace hacks::outoffovarrows
-
-void CPlayerArrows::Run()
+static std::vector<Vector> m_vecPlayers{};
+void Run()
 {
+    if (!ShouldRun())
+        return;
 
-    if (const auto &pLocal = g_EntityCache.m_pLocal)
+    Vector vLocalPos = LOCAL_E->m_vecOrigin();
+
+    m_vecPlayers.clear();
+
+    for (const auto &pEnemy : entity_cache::valid_ents)
     {
-        if (!ShouldRun(pLocal))
-            return;
+        if (!pEnemy || !pEnemy->m_bAlivePlayer() || IsPlayerInvisible(pEnemy) || HasCondition<TFCond_HalloweenGhostMode>(pEnemy))
+            continue;
 
-        Vector vLocalPos = pLocal->GetWorldSpaceCenter();
+        if (*ignore_friends && playerlist::IsFriend(pEnemy))
+            continue;
 
-        m_vecPlayers.clear();
+        Vector vEnemyPos  = pEnemy->m_vecOrigin();
+        float fFovToEnemy = GetFov(g_pLocalPlayer->v_OrigViewangles, g_pLocalPlayer->v_Eye, vEnemyPos);
 
-        for (const auto &pEnemy : g_EntityCache.GetGroup(EGroupType::PLAYERS_ENEMIES))
+        if (fFovToEnemy < *override_fov)
+            continue;
+
+        m_vecPlayers.push_back(vEnemyPos);
+    }
+    if (m_vecPlayers.empty())
+        return;
+
+    for (const auto &Player : m_vecPlayers)
+    {
+        rgba_t teamColor;
+        if (!*enemy_team_colors)
         {
-            if (!pEnemy || !pEnemy->IsAlive() || pEnemy->IsCloaked() || pEnemy->IsAGhost())
-                continue;
-
-            if (Vars::Visuals::SpyWarningIgnoreFriends.m_Var && g_EntityCache.Friends[pEnemy->GetIndex()])
-                continue;
-
-            Vector vEnemyPos = pEnemy->GetWorldSpaceCenter();
-
-            Vector vAngleToEnemy = CalcAngle(vLocalPos, vEnemyPos);
-            Vector viewangless   = g_Interfaces.Engine->GetViewAngles();
-            viewangless.x        = 0;
-            float fFovToEnemy    = CalcFov(viewangless, vAngleToEnemy);
-
-            if (fFovToEnemy < Vars::Visuals::FieldOfView.m_Var)
-                continue;
-
-            m_vecPlayers.push_back(vEnemyPos);
-        }
-        if (m_vecPlayers.empty())
-            return;
-
-        for (const auto &Player : m_vecPlayers)
-        {
-            rgba_t teamColor;
-            if (!Vars::ESP::Main::EnableTeamEnemyColors.m_Var)
+            if (LOCAL_E->m_iTeam() == 2)
             {
-                if (pLocal->GetTeamNum() == 2)
-                {
-                    teamColor = Colors::TeamBlu;
-                }
-                else
-                {
-                    teamColor = Colors::TeamRed;
-                }
+                teamColor = colors::blu;
             }
             else
             {
-                teamColor = Colors::Enemy;
+                teamColor = colors::red;
             }
-            DrawArrowTo(vLocalPos, Player, teamColor);
         }
+        else
+        {
+            teamColor = colors::gui;
+        }
+        DrawArrowTo(vLocalPos, Player, teamColor);
     }
 }
+
+#if ENABLE_VISUALS
+static InitRoutine EC([]() { EC::Register(EC::Draw, Run, "outoffovarrows", EC::average); });
+#endif
+} // namespace hacks::outoffovarrows
