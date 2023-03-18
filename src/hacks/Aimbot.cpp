@@ -185,7 +185,7 @@ inline int BestHitbox(CachedEntity *target)
     {
     case 0: // AUTO priority
         return AutoHitbox(target);
-    case 1: // AUTO priority, return closest hitbox to crosshair
+    case 1: // CLOSEST priority, return closest hitbox to crosshair
         return ClosestHitbox(target);
     case 2: // STATIC priority, return a user chosen hitbox
         return *hitbox;
@@ -446,16 +446,16 @@ bool AllowNoScope(CachedEntity *target)
     if (!isCarryingHeatmaker && targetHealth <= 50)
         return true;
 
-    if (isCarryingHeatmaker && targetHealth <= 40)
+    else if (isCarryingHeatmaker && targetHealth <= 40)
         return true;
 
-    if (isLocalPlayerCritBoosted && targetHealth <= 150)
+    else if (isLocalPlayerCritBoosted && targetHealth <= 150)
         return true;
 
-    if (isLocalPlayerMiniCritBoosted && targetHealth <= 68 && !isCarryingHeatmaker)
+    else if (isLocalPlayerMiniCritBoosted && targetHealth <= 68 && !isCarryingHeatmaker)
         return true;
 
-    if (isLocalPlayerMiniCritBoosted && targetHealth <= 54 && isCarryingHeatmaker)
+    else if (isLocalPlayerMiniCritBoosted && targetHealth <= 54 && isCarryingHeatmaker)
         return true;
 
     return false;
@@ -464,6 +464,7 @@ bool AllowNoScope(CachedEntity *target)
 void DoAutoZoom(bool target_found, CachedEntity *target)
 {
     bool isIdle = !target_found && hacks::followbot::isIdle();
+    auto nearest = hacks::NavBot::getNearestPlayerDistance();
 
     // Keep track of our zoom time
     static Timer zoomTime{};
@@ -478,7 +479,6 @@ void DoAutoZoom(bool target_found, CachedEntity *target)
         return;
     }
 
-    auto nearest = hacks::NavBot::getNearestPlayerDistance();
     if (g_pLocalPlayer->holding_sniper_rifle && !AllowNoScope(target) && (target_found || nearest.second <= *zoom_distance || isIdle))
     {
         if (target_found)
@@ -716,29 +716,36 @@ bool ShouldAim()
     if (current_user_cmd->buttons & IN_USE)
         return false;
     // Check if using action slot item
-    if (g_pLocalPlayer->using_action_slot_item)
+    else if (g_pLocalPlayer->using_action_slot_item)
         return false;
     // Using a forbidden weapon?
-    if (!LOCAL_W || LOCAL_W->m_iClassID() == CL_CLASS(CTFKnife) || CE_INT(LOCAL_W, netvar.iItemDefinitionIndex) == 237 || CE_INT(LOCAL_W, netvar.iItemDefinitionIndex) == 265)
+    else if (!LOCAL_W || LOCAL_W->m_iClassID() == CL_CLASS(CTFKnife) || CE_INT(LOCAL_W, netvar.iItemDefinitionIndex) == 237 || CE_INT(LOCAL_W, netvar.iItemDefinitionIndex) == 265)
         return false;
     // Carrying A building?
-    if (CE_BYTE(LOCAL_E, netvar.m_bCarryingObject))
+    else if (CE_BYTE(LOCAL_E, netvar.m_bCarryingObject))
         return false;
     // Deadringer out?
-    if (CE_BYTE(LOCAL_E, netvar.m_bFeignDeathReady))
+    else if (CE_BYTE(LOCAL_E, netvar.m_bFeignDeathReady))
         return false;
-    if (g_pLocalPlayer->holding_sapper)
+    else if (g_pLocalPlayer->holding_sapper)
         return false;
     // Is bonked?
-    if (HasCondition<TFCond_Bonked>(LOCAL_E))
+    else if (HasCondition<TFCond_Bonked>(LOCAL_E))
         return false;
     // Is taunting?
-    if (HasCondition<TFCond_Taunting>(LOCAL_E))
+    else if (HasCondition<TFCond_Taunting>(LOCAL_E))
         return false;
     // Is cloaked?
-    if (IsPlayerInvisible(LOCAL_E))
+    else if (IsPlayerInvisible(LOCAL_E))
         return false;
-    if (LOCAL_W->m_iClassID() == CL_CLASS(CTFMinigun) && CE_INT(LOCAL_E, netvar.m_iAmmo + 4) == 0)
+    // Local minigun out of ammo?
+    else if (LOCAL_W->m_iClassID() == CL_CLASS(CTFMinigun) && CE_INT(LOCAL_E, netvar.m_iAmmo + 4) == 0)
+        return false;
+    // Local weapon out of clip?
+    else if (CE_INT(g_pLocalPlayer->weapon(), netvar.m_iClip1) == 0)
+        return false;
+    // Is Zoomed and Can headshot?
+    else if (g_pLocalPlayer->bZoomed && !(current_user_cmd->buttons & (IN_ATTACK | IN_ATTACK2)) && !CanHeadshot())
         return false;
 #if ENABLE_VISUALS
     if (*assistance_only && !MouseMoving())
@@ -1101,6 +1108,10 @@ bool IsTargetStateGood(CachedEntity *entity)
 // A function to aim at a specific entity
 bool Aim(CachedEntity *entity)
 {
+
+    if (only_can_shoot && !CanShoot() && !hacks::warp::in_rapidfire)
+        return false;
+    
     if (*miss_chance > 0 && UniformRandomInt(0, 99) < *miss_chance)
         return true;
 
@@ -1201,7 +1212,10 @@ void DoAutoshoot(CachedEntity *target_entity)
     // Enable check
     if (!*autoshoot)
         return;
-    if (!*autoshoot_disguised && IsPlayerDisguised(LOCAL_E))
+    else if (!*autoshoot_disguised && IsPlayerDisguised(LOCAL_E))
+        return;
+    // Check if we can shoot, ignore during rapidfire
+    else if (only_can_shoot && !CanShoot() && !hacks::warp::in_rapidfire)
         return;
     // Handle Huntsman/Loose cannon
     if (LOCAL_W->m_iClassID() == CL_CLASS(CTFCompoundBow) || LOCAL_W->m_iClassID() == CL_CLASS(CTFCannon))
