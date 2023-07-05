@@ -20,6 +20,7 @@
 #include "teamroundtimer.hpp"
 #include "Aimbot.hpp"
 #include "navparser.hpp"
+#include "MiscAimbot.hpp"
 #if ENABLE_VISUALS
 #include "drawing.hpp"
 #endif
@@ -722,7 +723,9 @@ static void followCrumbs()
     {
         Vector next{ crumbs[0].vec.x, crumbs[0].vec.y, g_pLocalPlayer->v_Eye.z };
         next = GetAimAtAngles(g_pLocalPlayer->v_Eye, next);
-
+        
+        // Nav smoothen
+        hacks::misc_aimbot::DoSlowAim(next_slow, aim_speed);
         current_user_cmd->viewangles = next;
     }
 
