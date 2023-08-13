@@ -30,7 +30,6 @@
 #include "timer.hpp"
 
 #include "core/macros.hpp"
-#include "Constants.hpp"
 #if ENABLE_VISUALS
 #include <visual/colors.hpp>
 #include <visual/drawing.hpp>
@@ -77,11 +76,6 @@
 #include "copypasted/CSignature.h"
 
 #include <core/sdk.hpp>
-
-template <typename T> constexpr T _clamp(T _min, T _max, T _val)
-{
-    return _val > _max ? _max : _val < _min ? _min : _val;
-}
 
 #define _FASTCALL __attribute__((fastcall))
 #define STRINGIFY(x) #x

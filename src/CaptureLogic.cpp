@@ -443,7 +443,7 @@ std::optional<Vector> getClosestControlPoint(Vector source, int team)
         // They can cap
         if (cp.can_cap.at(team_idx))
         {
-            const auto dist_sq = (*cp.position).DistToSqr(source);
+            const auto dist_sq = cp.position->DistToSqr(source);
             // Is it closer?
             if (cp.position && dist_sq < best_distance)
             {

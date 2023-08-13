@@ -12,10 +12,20 @@
 #define MENU_COLOR (menu_color)
 
 // This is a temporary file to put code that needs moving/refactoring in.
-extern bool *bSendPackets;
 extern bool ignoreKeys;
-extern std::array<int, 32> bruteint;
-extern std::array<Timer, 32> timers;
+
+//-------------------------
+// Shared Sentry State
+//-------------------------
+enum
+{
+    SENTRY_STATE_INACTIVE = 0,
+    SENTRY_STATE_SEARCHING,
+    SENTRY_STATE_ATTACKING,
+    SENTRY_STATE_UPGRADING,
+
+    SENTRY_NUM_STATES
+};
 
 extern Timer DelayTimer;
 extern bool firstcm;
@@ -23,11 +33,8 @@ extern bool ignoredc;
 extern bool user_sensitivity_ratio_set;
 
 extern bool calculated_can_shoot;
-extern float prevflow;
-extern int prevflowticks;
 #if ENABLE_VISUALS
 extern int spectator_target;
-extern CLC_VoiceData *voicecrash;
 extern bool freecam_is_toggled;
 #endif
 extern settings::Boolean clean_chat;

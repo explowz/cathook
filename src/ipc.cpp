@@ -233,8 +233,8 @@ std::unique_ptr<peer_t> peer;
 CatCommand debug_get_ingame_ipc("ipc_debug_dump_server", "Show other bots on server",
                                 []()
                                 {
-                                    std::vector<unsigned> players{};
-                                    for (int j = 1; j <= MAX_PLAYERS; j++)
+                                    std::vector<uint32> players{};
+                                    for (int j = 1; j <= g_GlobalVars->maxClients; ++j)
                                     {
                                         player_info_s info{};
                                         if (GetPlayerInfo(j, &info))
@@ -242,8 +242,7 @@ CatCommand debug_get_ingame_ipc("ipc_debug_dump_server", "Show other bots on ser
                                                 players.push_back(info.friendsID);
                                     }
                                     int count = 0;
-                                    std::vector<unsigned> botlist{};
-                                    for (unsigned char i = 0; i < cat_ipc::max_peers; i++)
+                                    for (unsigned char i = 0; i < cat_ipc::max_peers; ++i)
                                     {
                                         if (!ipc::peer->memory->peer_data[i].free)
                                         {
@@ -251,7 +250,6 @@ CatCommand debug_get_ingame_ipc("ipc_debug_dump_server", "Show other bots on ser
                                             {
                                                 if (ipc::peer->memory->peer_user_data[i].friendid && k == ipc::peer->memory->peer_user_data[i].friendid)
                                                 {
-                                                    botlist.push_back(i);
                                                     logging::Info("-> %u (%u)", i, ipc::peer->memory->peer_user_data[i].friendid);
                                                     count++;
                                                 }
@@ -282,6 +280,7 @@ void update_mapname()
     user_data_s &data = peer->memory->peer_user_data[peer->client_id];
     strncpy(data.ingame.mapname, GetLevelName().c_str(), sizeof(data.ingame.mapname));
 }
+
 float framerate = 0.0f;
 void UpdateTemporaryData()
 {
@@ -308,7 +307,7 @@ void UpdateTemporaryData()
             data.ingame.role       = g_pPlayerResource->GetClass(LOCAL_E);
             data.ingame.life_state = NET_BYTE(player, netvar.iLifeState);
             data.ingame.health     = NET_INT(player, netvar.iHealth);
-            data.ingame.health_max = g_pPlayerResource->GetMaxHealth(LOCAL_E);
+            data.ingame.health_max = LOCAL_E->m_iMaxHealth();
 
             if (score_saved > data.ingame.score)
                 score_saved = 0;
@@ -333,9 +332,8 @@ void UpdateTemporaryData()
             hacks::catbot::update_ipc_data(data);
         }
         else
-        {
             data.ingame.good = false;
-        }
+
         if (g_IEngine->GetLevelName())
             update_mapname();
     }
@@ -351,8 +349,7 @@ void StoreClientData()
     data.friendid     = g_ISteamUser->GetSteamID().GetAccountID();
     data.ts_injected  = time_injected;
     data.textmode     = ENABLE_TEXTMODE;
-    if (g_ISteamUser)
-        strncpy(data.name, GetNamestealName(g_ISteamUser->GetSteamID()).c_str(), sizeof(data.name));
+    strncpy(data.name, GetNamestealName(g_ISteamUser->GetSteamID()).c_str(), sizeof(data.name));
 }
 
 void Heartbeat()
@@ -391,7 +388,7 @@ static int cat_completionCallback(const char *c_partial, char commands[COMMAND_C
 
     for (auto i = 0u; i < partial.size() && j < 3; ++i)
     {
-        auto space = (bool) isspace(partial.at(i));
+        auto space = static_cast<bool>(isspace(partial.at(i)));
         if (!space)
         {
             if (j)
@@ -414,10 +411,11 @@ static int cat_completionCallback(const char *c_partial, char commands[COMMAND_C
             auto variable = settings::Manager::instance().lookup(s);
             if (variable)
             {
-                if (s.compare(parts.at(0)))
+                if (s != parts.at(0))
                     snprintf(commands[count++], COMMAND_COMPLETION_ITEM_LENGTH - 1, "cat_ipc_sync_all %s", s.c_str());
                 else
                     snprintf(commands[count++], COMMAND_COMPLETION_ITEM_LENGTH - 1, "cat_ipc_sync_all %s %s", s.c_str(), variable->toString().c_str());
+
                 if (count == COMMAND_COMPLETION_MAXITEMS)
                     break;
             }

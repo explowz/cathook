@@ -114,7 +114,8 @@ public:
     gamerules_roundstate_t m_iRoundState;      // 68   | 4 bytes    | 72
     char pad1[1];                              // 72   | 1 byte     | 73
     bool m_bInSetup;                           // 73   | 1 byte     | 74
-    char pad2[2];                              // 74   | 4 bytes    | 76
+    bool m_bSwitchedTeamsThisRound;            // 74   | 1 byte     | 75
+    char pad2[1];                              // 75   | 1 byte     | 76
     int m_iWinningTeam;                        // 76   | 4 bytes    | 80
     char pad3[4];                              // 80   | 4 bytes    | 84
     bool m_bInWaitingForPlayers;               // 84   | 1 byte     | 85
@@ -216,6 +217,11 @@ public:
     bool IsInWaitingForPlayers() const
     {
         return m_bInWaitingForPlayers;
+    }
+
+    bool SwitchedTeamsThisRound() const
+    {
+        return m_bSwitchedTeamsThisRound;
     }
 
     HalloweenScenarioType GetHalloweenScenario() const;

@@ -32,7 +32,6 @@ void EntityHitboxCache::Init()
         if (!set)
             return;
         m_pLastModel   = const_cast<model_t *>(model);
-        m_nNumHitboxes = 0;
         m_nNumHitboxes = set->numhitboxes;
 
         if (m_nNumHitboxes > CACHE_MAX_HITBOXES)
@@ -62,7 +61,7 @@ bool EntityHitboxCache::VisibilityCheck(int id)
     // Bitmask works sort of like an index in our case. 1 would be the first bit, and we are shifting this by id to get our index
     uint_fast64_t mask = 1ULL << id;
     // No branch conditional set https://graphics.stanford.edu/~seander/bithacks.html#ConditionalSetOrClearBitsWithoutBranching
-    m_VisCheck = m_VisCheck & ~mask | -validation & mask;
+    m_VisCheck = (m_VisCheck & ~mask) | (-validation & mask);
     m_VisCheckValidationFlags |= 1ULL << id;
     return m_VisCheck >> id & 1;
 }

@@ -107,7 +107,7 @@ void Event(KeyValues *event)
         int victim   = event->GetInt("userid");
         int eid      = GetPlayerForUserID(attacker);
         int vid      = GetPlayerForUserID(victim);
-        if (eid > 0 && eid <= MAX_PLAYERS && vid > 0 && vid <= MAX_PLAYERS)
+        if (eid > 0 && eid <= g_GlobalVars->maxClients && vid > 0 && vid <= g_GlobalVars->maxClients)
         {
             auto &Po_v = Player_origs[vid];
             auto &Po_e = Player_origs[eid];

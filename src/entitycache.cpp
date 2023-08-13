@@ -16,12 +16,11 @@ inline void CachedEntity::Update()
     if (!m_pEntity)
         return;
 #endif
-    m_lLastSeen = 0;
     hitboxes.InvalidateCache();
     m_bVisCheckComplete = false;
 }
 
-inline CachedEntity::CachedEntity(u_int16_t idx) : m_IDX(idx), hitboxes(hitbox_cache::EntityHitboxCache{ idx })
+inline CachedEntity::CachedEntity(int idx) : m_IDX(idx), hitboxes(hitbox_cache::EntityHitboxCache{ idx })
 {
 #ifndef PROXY_ENTITY
     m_pEntity = nullptr;
@@ -62,16 +61,16 @@ bool CachedEntity::IsVisible()
 
 namespace entity_cache
 {
-boost::unordered_flat_map<u_int16_t, CachedEntity> array;
+boost::unordered_flat_map<int, CachedEntity> array;
 std::vector<CachedEntity *> valid_ents;
 std::vector<CachedEntity *> player_cache;
-u_int16_t previous_max = 0;
-u_int16_t previous_ent = 0;
+int previous_max = 0;
+int previous_ent = 0;
 
 void Update()
 {
-    max                    = g_IEntityList->GetHighestEntityIndex();
-    u_int16_t current_ents = g_IEntityList->NumberOfEntities(false);
+    max              = g_IEntityList->GetHighestEntityIndex();
+    int current_ents = g_IEntityList->NumberOfEntities(false);
     valid_ents.clear();
     player_cache.clear();
     if (g_Settings.bInvalid)
@@ -117,7 +116,7 @@ void Update()
     }
     else
     {
-        for (u_int16_t i = 0; i <= max; ++i)
+        for (int i = 0; i <= max; ++i)
         {
             if (!g_IEntityList->GetClientEntity(i) || !g_IEntityList->GetClientEntity(i)->GetClientClass()->m_ClassID)
                 continue;
@@ -168,5 +167,5 @@ void Shutdown()
     max          = -1;
 }
 
-u_int16_t max = 1;
+int max = 1;
 } // namespace entity_cache

@@ -197,7 +197,7 @@ int BlastDangerValue(CachedEntity *patient)
                     hasCritRockets = true;
                 hasRockets = true;
             }
-            it++;
+            ++it;
         }
         else
         {
@@ -284,8 +284,8 @@ int OptimalResistance(CachedEntity *patient, bool *shouldPop)
 
 void SetResistance(int resistance)
 {
-    resistance              = _clamp(0, 2, resistance);
-    vaccinator_change_timer = (int) change_timer;
+    resistance              = std::clamp(resistance, 0, 2);
+    vaccinator_change_timer = *change_timer;
     vaccinator_ideal_resist = resistance;
     int cur                 = CurrentResistance();
     if (resistance == cur)
@@ -472,10 +472,10 @@ bool CanHeal(int idx)
         return false;
     if (ent->m_bEnemy())
         return false;
-    if (ent->m_flDistance() > 420)
+    if (ent->m_flDistance() > 420.0f)
         return false;
     // TODO visible any hitbox
-    if (!IsEntityVisible(ent, 7))
+    if (!IsEntityVisible(ent, hitbox_t::lowerArm_L))
         return false;
     if (IsPlayerInvisible(ent))
         return false;
@@ -659,7 +659,6 @@ static void CreateMove()
     // Hold down if we are currently healing our target or not healing anyone
     if (autoheal_mode == 0 && (target_is_healing_target || CE_INT(LOCAL_W, netvar.m_hHealingTarget) == -1))
         current_user_cmd->buttons |= IN_ATTACK;
-
     // Press once if we are not healing our target
     else if (autoheal_mode == 1 && !target_is_healing_target)
         current_user_cmd->buttons |= IN_ATTACK;

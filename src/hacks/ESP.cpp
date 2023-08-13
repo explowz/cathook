@@ -1502,7 +1502,7 @@ void ResetEntityStrings(bool full_clear)
     }
     else
     {
-        for (u_int16_t i = 1; i < g_GlobalVars->maxClients; ++i)
+        for (int i = 1; i < g_GlobalVars->maxClients; ++i)
         {
             auto &element        = data[i];
             element.string_count = 0;

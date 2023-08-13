@@ -71,7 +71,7 @@ static void initPlayerlist()
 
 void sortPList()
 {
-    for (auto i = 1; i <= MAX_PLAYERS; ++i)
+    for (auto i = 1; i <= g_GlobalVars->maxClients; ++i)
     {
         player_info_s info{};
         if (GetPlayerInfo(i, &info))
@@ -83,7 +83,7 @@ void sortPList()
             }
         }
     }
-    for (auto i = 1; i <= MAX_PLAYERS; ++i)
+    for (auto i = 1; i <= g_GlobalVars->maxClients; ++i)
     {
         player_info_s info{};
         if (GetPlayerInfo(i, &info))
@@ -95,7 +95,7 @@ void sortPList()
             }
         }
     }
-    for (auto i = 1; i <= MAX_PLAYERS; ++i)
+    for (auto i = 1; i <= g_GlobalVars->maxClients; ++i)
     {
         player_info_s info{};
         if (GetPlayerInfo(i, &info))

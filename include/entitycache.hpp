@@ -22,7 +22,6 @@
 #include "globals.hpp"
 #include "classinfo/classinfo.hpp"
 #include "client_class.h"
-#include "Constants.hpp"
 #include <optional>
 #include "boost/unordered/unordered_flat_map.hpp"
 #include <soundcache.hpp>
@@ -66,7 +65,7 @@ class CachedEntity
 public:
     typedef CachedEntity ThisClass;
     CachedEntity();
-    explicit CachedEntity(u_int16_t idx);
+    explicit CachedEntity(int idx);
     ~CachedEntity();
 
     __attribute__((hot)) void Update();
@@ -95,7 +94,7 @@ public:
         return entity;
     }
 
-    const u_int16_t m_IDX;
+    const int m_IDX;
 
     int m_iClassID() const
     {
@@ -246,16 +245,6 @@ public:
 
     bool m_bAnyHitboxVisible{ false };
     bool m_bVisCheckComplete{ false };
-
-    /*k_EItemType m_ItemType()
-    {
-        if (m_Type() == ENTITY_GENERIC)
-            return g_ItemManager.GetItemType(this);
-        else
-            return ITEM_NONE;
-    };*/
-
-    unsigned long m_lLastSeen{ 0 };
     Vector m_vecVelocity{ 0 };
     Vector m_vecAcceleration{ 0 };
     hitbox_cache::EntityHitboxCache hitboxes;
@@ -264,14 +253,12 @@ public:
     {
         m_bAnyHitboxVisible = false;
         m_bVisCheckComplete = false;
-        m_lLastSeen         = 0;
         if (player_info)
             memset(player_info, 0, sizeof(player_info_s));
         m_vecAcceleration.Zero();
         m_vecVelocity.Zero();
     }
 
-    bool velocity_is_valid{ false };
 #ifndef PROXY_ENTITY
     IClientEntity *m_pEntity{ nullptr };
 #endif
@@ -279,12 +266,12 @@ public:
 
 namespace entity_cache
 {
-extern u_int16_t max;
-extern u_int16_t previous_max;
+extern int max;
+extern int previous_max;
 extern std::vector<CachedEntity *> valid_ents;
-extern boost::unordered_flat_map<u_int16_t, CachedEntity> array;
+extern boost::unordered_flat_map<int, CachedEntity> array;
 extern std::vector<CachedEntity *> player_cache;
-inline CachedEntity *Get(const u_int16_t &idx)
+inline CachedEntity *Get(const int &idx)
 {
     auto test = array.find(idx);
     return test != array.end() ? &test->second : nullptr;

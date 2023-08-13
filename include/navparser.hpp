@@ -20,16 +20,16 @@ enum Priority_list
     prio_melee,
     engineer,
     health,
-    danger,
+    danger
 };
 
 namespace navparser
 {
-constexpr float PLAYER_WIDTH       = 49;
+constexpr float PLAYER_WIDTH       = 49.0f;
 constexpr float HALF_PLAYER_WIDTH  = PLAYER_WIDTH / 2.0f;
 constexpr float PLAYER_JUMP_HEIGHT = 72.0f;
 
-#define TICKCOUNT_TIMESTAMP(seconds) (g_GlobalVars->tickcount + int((seconds) / g_GlobalVars->interval_per_tick))
+#define TICKCOUNT_TIMESTAMP(seconds) (g_GlobalVars->tickcount + static_cast<int>((seconds) / g_GlobalVars->interval_per_tick))
 
 // Basic Blacklist reasons, you can add your own externally and use them
 enum BlacklistReason_enum
@@ -38,7 +38,7 @@ enum BlacklistReason_enum
     STICKY,
     ENEMY_NORMAL,
     ENEMY_DORMANT,
-    BAD_BUILDING_SPOT,
+    // BAD_BUILDING_SPOT,
     // Always last
     BLACKLIST_LENGTH
 };

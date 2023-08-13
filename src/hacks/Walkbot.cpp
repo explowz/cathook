@@ -230,12 +230,12 @@ using state::nodes;
 
 bool HasLowAmmo()
 {
-    int *weapon_list = (int *) ((unsigned) (RAW_ENT(LOCAL_E)) + netvar.hMyWeapons);
+    int *weapon_list = &CE_INT(LOCAL_E, netvar.hMyWeapons);
     for (int i = 0; weapon_list[i]; ++i)
     {
         int handle = weapon_list[i];
         int eid    = HandleToIDX(handle);
-        if (eid > MAX_PLAYERS && eid <= HIGHEST_ENTITY)
+        if (eid > g_GlobalVars->maxClients && eid <= HIGHEST_ENTITY)
         {
             IClientEntity *weapon = g_IEntityList->GetClientEntity(eid);
             if (weapon && re::C_BaseCombatWeapon::IsBaseCombatWeapon(weapon) && re::C_TFWeaponBase::UsesPrimaryAmmo(weapon) && !re::C_TFWeaponBase::HasPrimaryAmmo(weapon))
@@ -247,7 +247,7 @@ bool HasLowAmmo()
 
 bool HasLowHealth()
 {
-    return float(LOCAL_E->m_iHealth()) / float(LOCAL_E->m_iMaxHealth()) < 0.45;
+    return static_cast<float>(LOCAL_E->m_iHealth()) / static_cast<float>(LOCAL_E->m_iMaxHealth()) < 0.45f;
 }
 
 void DeleteNode(index_t node)

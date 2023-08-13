@@ -19,6 +19,7 @@
 #include "CNavFile.h"
 #include "Aimbot.hpp"
 #include "navparser.hpp"
+#include "MiscTemporary.hpp"
 #if ENABLE_VISUALS
 #include "drawing.hpp"
 #endif
@@ -344,7 +345,7 @@ public:
         // Sentries make sounds, so we can just rely on soundcache here and always clear sentries
         NavEngine::clearFreeBlacklist(BlacklistReason(SENTRY));
         // Find sentries and stickies
-        for (int i = g_GlobalVars->maxClients + 1; i < MAX_ENTITIES; i++)
+        for (int i = g_GlobalVars->maxClients + 1; i < HIGHEST_ENTITY; ++i)
         {
             CachedEntity *ent = ENTITY(i);
             if (CE_INVALID(ent) || !ent->m_bAlivePlayer() || ent->m_iTeam() == g_pLocalPlayer->team)
@@ -353,13 +354,15 @@ public:
             bool is_sticky = ent->m_iClassID() == CL_CLASS(CTFGrenadePipebombProjectile) && CE_INT(ent, netvar.iPipeType) == 1 && CE_VECTOR(ent, netvar.vVelocity).IsZero(1.0f);
             // Not sticky/sentry, ignore.
             // (Or dormant sticky)
-            if (!is_sentry && (!is_sticky || CE_BAD(ent)))
+            if (!is_sentry && (!is_sticky || RAW_ENT(ent)->IsDormant()))
                 continue;
             if (is_sentry)
             {
                 // Should we even ignore the sentry?
+                if (CE_INT(ent, netvar.m_iSentryState) == SENTRY_STATE_INACTIVE)
+                    continue;
                 // Soldier/Heavy do not care about Level 1 or mini sentries
-                bool is_strong_class = g_pLocalPlayer->clazz == tf_heavy;
+                bool is_strong_class = g_pLocalPlayer->clazz == tf_heavy || g_pLocalPlayer->clazz == tf_soldier;
                 int bullet           = CE_INT(ent, netvar.m_iAmmoShells);
                 int rocket           = CE_INT(ent, netvar.m_iAmmoRockets);
                 if (is_strong_class && (CE_BYTE(ent, netvar.m_bMiniBuilding) || CE_INT(ent, netvar.iUpgradeLevel) == 1) || bullet == 0 && (CE_INT(ent, netvar.iUpgradeLevel) != 3 || rocket == 0))
@@ -373,7 +376,7 @@ public:
                 // Get origin of the sentry
                 auto building_origin = GetBuildingPosition(ent);
                 // For dormant sentries we need to add the jump height to the z
-                if (CE_BAD(ent))
+                if (RAW_ENT(ent)->IsDormant())
                     building_origin.z += PLAYER_JUMP_HEIGHT;
                 // Actual building check
                 for (auto &i : navfile.m_areas)
@@ -413,9 +416,7 @@ public:
 
         static size_t previous_blacklist_size = 0;
 
-        bool erased = false;
-        if (previous_blacklist_size != free_blacklist.size())
-            erased = true;
+        bool erased = previous_blacklist_size != free_blacklist.size();
         previous_blacklist_size = free_blacklist.size();
 
         std::erase_if(free_blacklist, [](const auto &entry) { return entry.second.time && entry.second.time < g_GlobalVars->tickcount; });

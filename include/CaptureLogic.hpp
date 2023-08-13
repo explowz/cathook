@@ -54,7 +54,7 @@ struct cp_info
     // Index in the ObjectiveResource
     int cp_index{ -1 };
     std::optional<Vector> position;
-    // For BLU and RED to show who can and who cannnot cap
+    // For BLU and RED to show who can and cannot cap
     std::array<bool, 2> can_cap{};
     cp_info() = default;
 };
