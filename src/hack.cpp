@@ -13,8 +13,8 @@
 #include <visual/SDLHooks.hpp>
 
 #ifdef __RDSEED__ // Used for InitRandom()
-#include "x86gprintrin.h"
-#else             /* __RDSEED__ */
+#include <x86intrin.h>
+#else /* __RDSEED__ */
 #include <random>
 #include <fstream>
 #include <chrono>
