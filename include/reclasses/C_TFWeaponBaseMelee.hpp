@@ -19,6 +19,7 @@ public:
         typedef bool (*fn_t)(IClientEntity *, trace_t *);
         return vfunc<fn_t>(self, offsets::PlatformOffset(527, offsets::undefined, 527), 0)(self, trace);
     }
+
     inline static int GetSwingRange(IClientEntity *self)
     {
         if (g_pLocalPlayer->holding_sapper)
@@ -43,7 +44,7 @@ public:
             CondBitSet<TFCond_Charging, true>(CE_VAR(owner_ce, netvar.iCond, condition_data_s));
         }
 
-        return_value = ATTRIB_HOOK_FLOAT(return_value, "melee_range_multiplier", RAW_ENT(LOCAL_W), nullptr, true);
+        return_value = ATTRIB_HOOK_FLOAT(static_cast<float>(return_value), "melee_range_multiplier", RAW_ENT(LOCAL_W), nullptr, true);
 
         return return_value;
     }

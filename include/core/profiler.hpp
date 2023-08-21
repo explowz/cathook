@@ -20,12 +20,12 @@ public:
 
     void OnNodeDeath(ProfilerNode &node);
 
-    std::chrono::nanoseconds m_min;
-    std::chrono::nanoseconds m_max;
-    std::chrono::nanoseconds m_sum;
-    unsigned m_spewcount;
-    unsigned m_calls;
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_log;
+    float m_min;
+    float m_max;
+    float m_sum;
+    unsigned int m_spewcount;
+    unsigned int m_calls;
+    float m_log;
     std::string m_name;
     ProfilerSection *m_parent;
 };
@@ -36,7 +36,7 @@ public:
     explicit ProfilerNode(ProfilerSection &section);
     ~ProfilerNode();
 
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_start;
+    float m_start;
     ProfilerSection &m_section;
 };
 

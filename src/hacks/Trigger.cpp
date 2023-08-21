@@ -43,12 +43,12 @@ Vector forward;
 inline float EffectiveTargetingRange()
 {
     if (GetWeaponMode() == weapon_melee)
-        return re::C_TFWeaponBaseMelee::GetSwingRange(RAW_ENT(LOCAL_W));
+        return static_cast<float>(re::C_TFWeaponBaseMelee::GetSwingRange(RAW_ENT(LOCAL_W)));
     // Pyros only have so much until their flames hit
     else if (LOCAL_W->m_iClassID() == CL_CLASS(CTFFlameThrower))
         return 300.0f;
     // If user has set a max range, then use their setting,
-    if (max_range)
+    if (*max_range > 0.0f)
         return *max_range;
     // else use a pre-set range
     else
@@ -62,7 +62,7 @@ static void CreateMove()
     target_time       = 0;
 
     // Check if trigerbot is enabled, weapon is valid and if player can aim
-    if (!enable || CE_BAD(LOCAL_W) || !ShouldShoot())
+    if (!*enable || CE_BAD(LOCAL_W) || !ShouldShoot())
         return;
 
     // Reset our last hitbox traced
@@ -117,16 +117,16 @@ static void CreateMove()
     if (state_good)
     {
         target_time = backup_time;
-        if (delay)
+        if (*delay)
         {
             if (target_time > g_GlobalVars->curtime)
                 target_time = 0.0f;
 
-            if (!target_time)
+            if (target_time == 0.0f)
                 target_time = g_GlobalVars->curtime;
             else
             {
-                if (g_GlobalVars->curtime - float(delay) >= target_time)
+                if (g_GlobalVars->curtime - *delay >= target_time)
                 {
                     current_user_cmd->buttons |= IN_ATTACK;
                     *bSendPackets = true;
@@ -217,7 +217,7 @@ bool IsTargetStateGood(CachedEntity *entity, std::optional<backtrack::BacktrackD
         if (!entity->m_bAlivePlayer())
             return false;
         // Don't aim at teammates
-        if (!entity->m_bEnemy() && !teammates)
+        if (!*teammates && !entity->m_bEnemy())
             return false;
 
         // Global checks
@@ -234,17 +234,17 @@ bool IsTargetStateGood(CachedEntity *entity, std::optional<backtrack::BacktrackD
             //                                      ? (entity->m_iHealth() *
             //                                      1.15)
             //                                      : entity->m_iHealth()))
-            if (bdmg * 3 < entity->m_iHealth())
+            if (bdmg * 3.0f < static_cast<float>(entity->m_iHealth()))
                 return false;
         }
         // Don't target invulnerable players, ex: uber, bonk
         if (IsPlayerInvulnerable(entity))
             return false;
         // If settings allow, don't target cloaked players
-        if (ignore_cloak && IsPlayerInvisible(entity))
+        if (*ignore_cloak && IsPlayerInvisible(entity))
             return false;
         // If settings allow, don't target vaccinated players
-        if (ignore_vaccinator && IsPlayerResistantToCurrentWeapon(entity))
+        if (*ignore_vaccinator && IsPlayerResistantToCurrentWeapon(entity))
             return false;
 
         // Head hitbox detection
@@ -268,7 +268,7 @@ bool IsTargetStateGood(CachedEntity *entity, std::optional<backtrack::BacktrackD
 
                 // Shrink the hitbox here
                 Vector size = maxz - minz;
-                Vector smod = size * 0.05f * *accuracy;
+                Vector smod = size * 0.05f * static_cast<float>(*accuracy);
 
                 // Save the changes to the vectors
                 minz += smod;
@@ -287,27 +287,27 @@ bool IsTargetStateGood(CachedEntity *entity, std::optional<backtrack::BacktrackD
     else if (entity->m_Type() == ENTITY_BUILDING)
     {
         // Check if building aimbot is enabled
-        if (!(buildings_other || buildings_sentry))
+        if (!*buildings_other && !*buildings_sentry)
             return false;
         // Check if enemy building
         if (!entity->m_bEnemy())
             return false;
 
         // If needed, Check if building type is allowed
-        if (!(buildings_other && buildings_sentry))
+        if (!*buildings_other || !*buildings_sentry)
         {
             // Check if target is a sentrygun
             if (entity->m_iClassID() == CL_CLASS(CObjectSentrygun))
             {
                 // If sentries are not allowed, don't target
-                if (!buildings_sentry)
+                if (!*buildings_sentry)
                     return false;
             }
             else
             {
                 // If target is not a sentry, check if other buildings are
                 // allowed
-                if (!buildings_other)
+                if (!*buildings_other)
                     return false;
             }
         }
@@ -320,7 +320,7 @@ bool IsTargetStateGood(CachedEntity *entity, std::optional<backtrack::BacktrackD
     else if (entity->m_iClassID() == CL_CLASS(CTFGrenadePipebombProjectile))
     {
         // Check if sticky aimbot is enabled
-        if (!stickybot)
+        if (!*stickybot)
             return false;
 
         // Check if thrower is a teammate
@@ -375,7 +375,6 @@ CachedEntity *FindEntInSight(float range, bool no_players)
 // A function to find whether the head should be used for a target
 bool HeadPreferable(CachedEntity *target)
 {
-
     // Switch based on the priority type we need
     switch (*hitbox_mode)
     {
@@ -408,29 +407,30 @@ bool HeadPreferable(CachedEntity *target)
             if (HasCondition<TFCond_UberBulletResist>(target))
             {
                 // Vac charge protects against 75% of damage
-                bdmg = (bdmg * .25) - 1;
-                cdmg = (cdmg * .25) - 1;
+                bdmg = (bdmg * .25f) - 1.0f;
+                cdmg = (cdmg * .25f) - 1.0f;
             }
             else if (HasCondition<TFCond_SmallBulletResist>(target))
             {
                 // Passive bullet resist protects against 10% of damage
-                bdmg = (bdmg * .90) - 1;
-                cdmg = (cdmg * .90) - 1;
+                bdmg = (bdmg * .90f) - 1.0f;
+                cdmg = (cdmg * .90f) - 1.0f;
             }
             // Invis damage correction
             if (IsPlayerInvisible(target))
             {
                 // Invis spies get protection from 10% of damage
-                bdmg = (bdmg * .80) - 1;
-                cdmg = (cdmg * .80) - 1;
+                bdmg = (bdmg * .80f) - 1.0f;
+                cdmg = (cdmg * .80f) - 1.0f;
             }
             // If can headshot and if bodyshot kill from charge damage, or
             // if crit boosted, and they have 150 health, or if player isn't
             // zoomed, or if the enemy has less than 40, due to darwins, and
             // only if they have less than 150 health will it try to bodyshot
-            if (CanHeadshot() && (cdmg >= target->m_iHealth() || IsPlayerCritBoosted(LOCAL_E) || !g_pLocalPlayer->bZoomed || target->m_iHealth() <= bdmg) && target->m_iHealth() <= 150)
+            const int target_health = target->m_iHealth();
+            if (CanHeadshot() && (cdmg >= static_cast<float>(target_health) || IsPlayerCritBoosted(LOCAL_E) || !g_pLocalPlayer->bZoomed || static_cast<float>(target_health) <= bdmg) && target_health <= 150)
             {
-                // We dont need to hit the head as a bodyshot will kill
+                // We don't need to hit the head as a bodyshot will kill
                 headonly = false;
             }
         }
@@ -460,12 +460,12 @@ bool UpdateAimkey()
     static bool pressed_last_tick = false;
     bool allow_trigger_key        = true;
     // Check if aimkey is used
-    if (trigger_key && trigger_key_mode)
+    if (trigger_key && *trigger_key_mode)
     {
         // Grab whether the aimkey is depressed
         bool key_down = trigger_key.isKeyDown();
         // Switch based on the user set aimkey mode
-        switch ((int) trigger_key_mode)
+        switch (*trigger_key_mode)
         {
         // Only while key is depressed, enable
         case 1:

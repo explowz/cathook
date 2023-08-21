@@ -9,39 +9,40 @@
 
 #include "common.hpp"
 
-unsigned g_spewcount{ 0 };
+unsigned int g_spewcount{ 0 };
 
 static CatCommand profiler_begin("profiler_spew", "Spew and reset", []() { g_spewcount++; });
 
 ProfilerSection::ProfilerSection(std::string name, ProfilerSection *parent)
 {
-    m_name   = std::move(name);
-    m_calls  = 0;
-    m_log    = std::chrono::high_resolution_clock::now();
-    m_min    = std::chrono::nanoseconds::zero();
-    m_max    = std::chrono::nanoseconds::zero();
-    m_sum    = std::chrono::nanoseconds::zero();
-    m_parent = parent;
+    m_name      = std::move(name);
+    m_calls     = 0;
+    m_log       = g_IEngine->Time();
+    m_min       = 0.0f;
+    m_max       = 0.0f;
+    m_sum       = 0.0f;
+    m_spewcount = 0;
+    m_parent    = parent;
 }
 
 void ProfilerSection::OnNodeDeath(ProfilerNode &node)
 {
-    auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - node.m_start);
-    if (m_min == std::chrono::nanoseconds::zero() || dur < m_min)
+    auto dur = g_IEngine->Time() - node.m_start;
+    if (m_min == 0.0f || dur < m_min)
         m_min = dur;
 
-    if (m_max == std::chrono::nanoseconds::zero() || dur > m_max)
+    if (m_max == 0.0f || dur > m_max)
         m_max = dur;
     m_sum += dur;
     m_calls++;
 
     if (g_spewcount > m_spewcount)
     {
-        logging::Info("[P],'%-32s',%12llu,%12llu,%12llu,%12llu,%u", m_name.c_str(), std::chrono::duration_cast<std::chrono::nanoseconds>(m_sum).count(), std::chrono::duration_cast<std::chrono::nanoseconds>(m_sum).count() / (m_calls ? m_calls : 1), std::chrono::duration_cast<std::chrono::nanoseconds>(m_min).count(), std::chrono::duration_cast<std::chrono::nanoseconds>(m_max).count(), m_calls);
-        m_log       = std::chrono::high_resolution_clock::now();
-        m_min       = std::chrono::nanoseconds::zero();
-        m_max       = std::chrono::nanoseconds::zero();
-        m_sum       = std::chrono::nanoseconds::zero();
+        logging::Info("[P],'%-32s',%12f,%12f,%12f,%12f,%u", m_name.c_str(), m_sum, m_sum / static_cast<float>(m_calls ? m_calls : 1), m_min, m_max, m_calls);
+        m_log       = g_IEngine->Time();
+        m_min       = 0.0f;
+        m_max       = 0.0f;
+        m_sum       = 0.0f;
         m_calls     = 0;
         m_spewcount = g_spewcount;
     }
@@ -49,7 +50,7 @@ void ProfilerSection::OnNodeDeath(ProfilerNode &node)
 
 ProfilerNode::ProfilerNode(ProfilerSection &section) : m_section(section)
 {
-    m_start = std::chrono::high_resolution_clock::now();
+    m_start = g_IEngine->Time();
 }
 
 ProfilerNode::~ProfilerNode()

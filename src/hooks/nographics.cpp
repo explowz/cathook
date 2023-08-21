@@ -83,7 +83,7 @@ static InitRoutine init_nographics(
 
 static bool blacklist_file(const char *&filename)
 {
-    const static char *blacklist[] = { ".ani", ".wav", ".mp3", ".vvd", ".vtx", ".vtf", ".vfe", ".cache" , ".pcf" };
+    const static char *blacklist[] = { ".ani", ".wav", ".mp3", ".vvd", ".vtx", ".vtf", ".vfe", ".cache", ".pcf" };
     if (!filename || !std::strncmp(filename, "materials/console/", 18))
         return false;
 

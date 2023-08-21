@@ -19,7 +19,7 @@ std::atomic_bool is_stopping{ false };
 bool IsStopping()
 {
     std::unique_lock lock(mutex_quit, std::try_to_lock);
-    if (!lock.owns_lock())
+    if (!lock.owns_lock()) [[unlikely]]
     {
         logging::Info("Shutting down, unlocking mutex");
         return true;
@@ -32,7 +32,7 @@ void MainThread()
 {
     hack::Initialize();
     logging::Info("Init done...");
-    while (!IsStopping())
+    while (!IsStopping()) [[likely]]
         hack::Think();
     hack::Shutdown();
     logging::Shutdown();

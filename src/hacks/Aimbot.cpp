@@ -773,7 +773,8 @@ CachedEntity *RetrieveBestTarget(bool aimkey_state)
     last_target_ignore_timer = 0;
 
     // Do not attempt to target hazards using melee weapons
-    if (*target_hazards && GetWeaponMode() != weapon_melee)
+    // Competitive maps do not have any hazards
+    if (*target_hazards && GetWeaponMode() != weapon_melee && !TFGameRules()->m_bCompetitiveMode)
     {
         for (const auto &hazard_entity : entity_cache::valid_ents)
         {

@@ -254,7 +254,7 @@ bool isEnabled()
     if (!randomCritEnabled())
         return false;
     // Melee overrides the enabled switch
-    if (melee || enabled)
+    if (*enabled || *melee)
         return true;
     // If none of these conditions pass, crithack is NOT on
     return false;
@@ -262,7 +262,7 @@ bool isEnabled()
 
 bool shouldMeleeCrit()
 {
-    if (!melee || GetWeaponMode() != weapon_melee)
+    if (!*melee || GetWeaponMode() != weapon_melee)
         return false;
     if (hacks::backtrack::backtrackEnabled())
     {
@@ -282,7 +282,7 @@ bool shouldMeleeCrit()
                 {
                     if (!tick.in_range)
                         continue;
-                    float distance = tick.m_vecOrigin.DistTo(g_pLocalPlayer->v_Origin);
+                    float distance = tick.m_vecOrigin.DistToSqr(g_pLocalPlayer->v_Origin);
                     if (distance < best_distance)
                     {
                         best_distance = distance;
@@ -295,7 +295,7 @@ bool shouldMeleeCrit()
         if (closest_tick)
         {
             // Out of range, don't crit
-            if (closest_tick->m_vecOrigin.DistTo(LOCAL_E->m_vecOrigin()) >= re::C_TFWeaponBaseMelee::GetSwingRange(RAW_ENT(LOCAL_W)) + 150.0f)
+            if (closest_tick->m_vecOrigin.DistTo(g_pLocalPlayer->v_Origin) >= re::C_TFWeaponBaseMelee::GetSwingRange(RAW_ENT(LOCAL_W)) + 150.0f)
                 return false;
         }
         else
@@ -304,7 +304,7 @@ bool shouldMeleeCrit()
     // Normal check, get closest entity and check distance
     else
     {
-        auto ent = getClosestEntity(LOCAL_E->m_vecOrigin());
+        auto ent = getClosestEntity(g_pLocalPlayer->v_Origin);
         if (!ent || ent->m_flDistance() >= re::C_TFWeaponBaseMelee::GetSwingRange(RAW_ENT(LOCAL_W)) + 150.0f)
             return false;
     }
@@ -320,7 +320,7 @@ bool shouldCrit()
     static bool pressed_key_last_tick = false;
     static int loose_cannon_countdown = 0;
     // Crit key + enabled, for melee, the crit key MUST be set
-    if (enabled && (GetWeaponMode() != weapon_melee && !crit_key || crit_key.isKeyDown()))
+    if (*enabled && (GetWeaponMode() != weapon_melee && !crit_key || crit_key.isKeyDown()))
     {
         pressed_key_last_tick = true;
         return true;
@@ -660,7 +660,7 @@ static void CreateMove()
     cached_damage = g_pPlayerResource->GetDamage(g_pLocalPlayer->entity_idx) - melee_damage;
 
     // We need to update player states regardless, else we can't sync the observed crit chance
-    for (const auto &ent: entity_cache::player_cache)
+    for (const auto &ent : entity_cache::player_cache)
     {
         // no valid check needed, GetHealth only uses m_IDX
         if (g_pPlayerResource->GetHealth(ent))
@@ -750,7 +750,7 @@ static void CreateMove()
         force_crit();
     }
     // Ok, we shouldn't crit for whatever reason, lets prevent crits
-    else if (force_no_crit)
+    else if (*force_no_crit)
     {
         // if (prevent_ticks >= 1)
         //    prevent_ticks--;
@@ -817,7 +817,7 @@ void Draw()
 {
     if (!isEnabled())
         return;
-    if (!draw && !draw_meter)
+    if (!*draw && !*draw_meter)
         return;
     if (!g_IEngine->GetNetChannelInfo())
         last_crit_tick = -1;
@@ -847,7 +847,7 @@ void Draw()
         std::pair<float, float> crit_mult_info = critMultInfo(wep);
 
         // Draw Text
-        if (draw)
+        if (*draw)
         {
             // Display for when crithack is active
             if (shouldCrit())
@@ -900,7 +900,7 @@ void Draw()
         }
 
         // Draw Bar
-        if (draw_meter)
+        if (*draw_meter)
         {
             // Can crit?
             if (re::C_TFWeaponBase::CanFireCriticalShot(RAW_ENT(LOCAL_W), false, nullptr) && added_per_shot)
@@ -1083,7 +1083,7 @@ void observedcritchance_nethook(const CRecvProxyData *data, void *pWeapon, void 
     // Do default action by default
     auto fl_observed_crit_chance = reinterpret_cast<float *>(out);
     *fl_observed_crit_chance     = data->m_Value.m_Float;
-    if (CE_BAD(LOCAL_W) || !enabled)
+    if (!*enabled || CE_BAD(LOCAL_W))
         return;
     if (pWeapon != RAW_ENT(LOCAL_W))
         return;
@@ -1102,11 +1102,11 @@ void observedcritchance_nethook(const CRecvProxyData *data, void *pWeapon, void 
             // Powered by math
             crit_damage = (3.0f * ranged_damage * sent_chance) / (2.0f * sent_chance + 1);
         }
-        if (debug_desync)
+        if (*debug_desync)
         {
             float old_observed_chance = getObservedCritChance();
             // We Were out of sync with the server
-            if (debug_desync && sent_chance > old_observed_chance && fabsf(sent_chance - old_observed_chance) > 0.01f)
+            if (sent_chance > old_observed_chance && std::fabs(sent_chance - old_observed_chance) > 0.01f)
             {
                 logging::Info("Out of sync! Observed crit chance is %f, but client expected: %f, fixed to %f", data->m_Value.m_Float, old_observed_chance, getObservedCritChance());
             }
