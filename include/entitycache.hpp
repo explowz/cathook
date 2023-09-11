@@ -23,7 +23,7 @@
 #include "classinfo/classinfo.hpp"
 #include "client_class.h"
 #include <optional>
-#include "boost/unordered/unordered_flat_map.hpp"
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <soundcache.hpp>
 
 struct matrix3x4_t;
