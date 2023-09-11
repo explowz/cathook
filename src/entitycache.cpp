@@ -61,7 +61,7 @@ bool CachedEntity::IsVisible()
 
 namespace entity_cache
 {
-boost::unordered_flat_map<int, CachedEntity> array;
+std::unordered_map<int, CachedEntity> array;
 std::vector<CachedEntity *> valid_ents;
 std::vector<CachedEntity *> player_cache;
 int previous_max = 0;

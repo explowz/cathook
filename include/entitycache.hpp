@@ -23,7 +23,6 @@
 #include "classinfo/classinfo.hpp"
 #include "client_class.h"
 #include <optional>
-#include <boost/unordered/unordered_flat_map.hpp>
 #include <soundcache.hpp>
 
 struct matrix3x4_t;
@@ -269,7 +268,7 @@ namespace entity_cache
 extern int max;
 extern int previous_max;
 extern std::vector<CachedEntity *> valid_ents;
-extern boost::unordered_flat_map<int, CachedEntity> array;
+extern std::unordered_map<int, CachedEntity> array;
 extern std::vector<CachedEntity *> player_cache;
 inline CachedEntity *Get(const int &idx)
 {

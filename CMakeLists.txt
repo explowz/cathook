@@ -158,14 +158,14 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-gnu-unique -fno-builtin")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-gnu-unique -fno-builtin -fipa-pta -fdevirtualize-at-ltrans -fsched-pressure")
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "-Og -m32 -march=native -mtune=native -rdynamic -ggdb")
+set(CMAKE_CXX_FLAGS_DEBUG "-Og -rdynamic -ggdb")
 if (Internal_Symbolized)
     set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -ggdb -fvisibility=hidden -fvisibility-inlines-hidden")
 else()
-    set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -s -flto -fprefetch-loop-arrays -fno-stack-protector -funroll-loops -fwhole-program -fipa-pta -fmerge-all-constants -fdevirtualize-at-ltrans -fsched-pressure -fvisibility=hidden -fvisibility-inlines-hidden")
+    set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -s -flto -fprefetch-loop-arrays -fno-stack-protector -funroll-loops -fwhole-program -fmerge-all-constants -fvisibility=hidden -fvisibility-inlines-hidden")
 endif()
 
 target_compile_definitions(cathook PRIVATE

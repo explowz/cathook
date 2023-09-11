@@ -511,12 +511,12 @@ void updateEnemyBlacklist(int slot)
         return;
 
     // Store the danger of the individual nav areas
-    boost::unordered_flat_map<CNavArea *, int> dormant_slight_danger;
-    boost::unordered_flat_map<CNavArea *, int> normal_slight_danger;
+    std::unordered_map<CNavArea *, int> dormant_slight_danger;
+    std::unordered_map<CNavArea *, int> normal_slight_danger;
 
     // This is used to cache Dangerous areas between ents
-    boost::unordered_flat_map<CachedEntity *, std::vector<CNavArea *>> ent_marked_dormant_slight_danger;
-    boost::unordered_flat_map<CachedEntity *, std::vector<CNavArea *>> ent_marked_normal_slight_danger;
+    std::unordered_map<CachedEntity *, std::vector<CNavArea *>> ent_marked_dormant_slight_danger;
+    std::unordered_map<CachedEntity *, std::vector<CNavArea *>> ent_marked_normal_slight_danger;
 
     std::vector<std::pair<CachedEntity *, Vector>> checked_origins;
     for (const auto &ent : entity_cache::player_cache)

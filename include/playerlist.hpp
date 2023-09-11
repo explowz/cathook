@@ -49,7 +49,7 @@ struct userdata
     unsigned kills{ 0 };
 };
 
-extern boost::unordered_flat_map<unsigned, userdata> data;
+extern std::unordered_map<unsigned, userdata> data;
 
 void Save();
 void Load();

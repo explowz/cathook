@@ -47,7 +47,7 @@ private:
     std::vector<std::string> commands;
 };
 
-static boost::unordered_flat_map<std::string, ChatCommand> commands;
+static std::unordered_map<std::string, ChatCommand> commands;
 
 void handleChatMessage(const std::string &message, int senderid)
 {
