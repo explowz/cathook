@@ -6,7 +6,7 @@
 
 #include "common.hpp"
 
-int Hash::String(const char *szOrg)
+unsigned long Hash::String(const char *szOrg)
 {
     int iHash = 5381;
 

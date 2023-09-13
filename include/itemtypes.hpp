@@ -7,7 +7,7 @@
 #pragma once
 #include <string>
 
-typedef unsigned int size_owned;
+typedef unsigned long size_owned;
 
 // Main hash function
 // And prehashed strings allowing for fast comparison.
@@ -133,5 +133,5 @@ bool IsHazard(const char *szName);
 bool IsFlag(const char *szName);
 bool IsBombCart(const char *szName);
 bool IsBombCartRed(const char *szName);
-int String(const char *szOrg);
+unsigned long String(const char *szOrg);
 } // namespace Hash
