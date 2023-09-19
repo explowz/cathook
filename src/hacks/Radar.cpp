@@ -4,7 +4,6 @@
  *  Created on: Mar 28, 2017
  *      Author: nullifiedcat
  */
-
 #include "common.hpp"
 #include <settings/Int.hpp>
 #include <hacks/Aimbot.hpp>
@@ -98,108 +97,113 @@ static std::vector<textures::sprite> tx_sentry{};
 
 void DrawEntity(int x, int y, CachedEntity *ent)
 {
-    int idx;
+    int idx = -1;
     rgba_t clr;
-    float healthp;
+    float healthp = 0.0f;
 
-    if (ent->m_Type() == ENTITY_PLAYER)
+    if (CE_VALID(ent))
     {
-        if (hide_invis && IsPlayerInvisible(ent))
-            return;
-        const int &clazz = CE_INT(ent, netvar.iClass);
-        const int &team  = ent->m_iTeam();
-        idx              = team - 2;
-        if (idx < 0 || idx > 1)
-            return;
-        if (clazz <= 0 || clazz > 9)
-            return;
-        if (!ent->m_vecDormantOrigin())
-            return;
-        const auto &wtr = WorldToRadar(ent->m_vecDormantOrigin()->x, ent->m_vecDormantOrigin()->y);
-
-        if (use_icons)
+        if (ent->m_Type() == ENTITY_PLAYER)
         {
-            tx_teams[idx].draw(x + wtr.first, y + wtr.second, (int) icon_size, (int) icon_size, colors::white);
-            tx_class[0][clazz - 1].draw(x + wtr.first, y + wtr.second, (int) icon_size, (int) icon_size, colors::white);
-        }
-        else
-        {
-            tx_class[2 - idx][clazz - 1].draw(x + wtr.first, y + wtr.second, (int) icon_size, (int) icon_size, colors::white);
-            draw::RectangleOutlined(x + wtr.first, y + wtr.second, (int) icon_size, (int) icon_size, *aimbot_highlight ? (ent == hacks::aimbot::CurrentTarget() ? colors::target : (idx ? colors::blu_v : colors::red_v)) : (idx ? colors::blu_v : colors::red_v), 1.0f);
-        }
-
-        if (ent->m_iMaxHealth() && *healthbar > 0)
-        {
-            healthp = (float) ent->m_iHealth() / (float) ent->m_iMaxHealth();
-            clr     = colors::Health(ent->m_iHealth(), ent->m_iMaxHealth());
-            if (healthp > 1.0f)
-                healthp = 1.0f;
-            draw::RectangleOutlined(x + wtr.first, y + wtr.second + (int) icon_size, (int) icon_size, 4, colors::black, 0.5f);
-            draw::Rectangle(x + wtr.first + 1, y + wtr.second + (int) icon_size + 1, (*icon_size - 2.0f) * healthp, *healthbar, clr);
-        }
-    }
-    else if (ent->m_Type() == ENTITY_BUILDING)
-    {
-        if (ent->m_iClassID() == CL_CLASS(CObjectDispenser) || ent->m_iClassID() == CL_CLASS(CObjectSentrygun) || ent->m_iClassID() == CL_CLASS(CObjectTeleporter))
-        {
+            if (!ent->m_bAlivePlayer())
+                return; // DEAD. not big surprise.
+            if (hide_invis && IsPlayerInvisible(ent))
+                return;
+            const int &clazz = CE_INT(ent, netvar.iClass);
+            const int &team  = CE_INT(ent, netvar.iTeamNum);
+            idx              = team - 2;
+            if (idx < 0 || idx > 1)
+                return;
+            if (clazz <= 0 || clazz > 9)
+                return;
             if (!ent->m_vecDormantOrigin())
                 return;
             const auto &wtr = WorldToRadar(ent->m_vecDormantOrigin()->x, ent->m_vecDormantOrigin()->y);
-            tx_teams[ent->m_iTeam() - 2].draw(x + wtr.first, y + wtr.second, *icon_size * 1.5f, *icon_size * 1.5f, colors::white);
-            switch (ent->m_iClassID())
+
+            if (use_icons)
             {
-            case CL_CLASS(CObjectDispenser):
+                tx_teams[idx].draw(x + wtr.first, y + wtr.second, (int) icon_size, (int) icon_size, colors::white);
+                tx_class[0][clazz - 1].draw(x + wtr.first, y + wtr.second, (int) icon_size, (int) icon_size, colors::white);
+            }
+            else
             {
-                tx_buildings[0].draw(x + wtr.first, y + wtr.second, *icon_size * 1.5f, *icon_size * 1.5f, colors::white);
-                break;
+                tx_class[2 - idx][clazz - 1].draw(x + wtr.first, y + wtr.second, (int) icon_size, (int) icon_size, colors::white);
+                draw::RectangleOutlined(x + wtr.first, y + wtr.second, (int) icon_size, (int) icon_size, *aimbot_highlight ? (ent == hacks::aimbot::CurrentTarget() ? colors::target : (idx ? colors::blu_v : colors::red_v)) : (idx ? colors::blu_v : colors::red_v), 1.0f);
             }
-            case CL_CLASS(CObjectSentrygun):
-            {
-                int level   = CE_INT(ent, netvar.iUpgradeLevel);
-                bool IsMini = CE_BYTE(ent, netvar.m_bMiniBuilding);
-                if (IsMini)
-                    level = 4;
-                tx_sentry[level - 1].draw(x + wtr.first, y + wtr.second, *icon_size * 1.5f, *icon_size * 1.5f, colors::white);
-                break;
-            }
-            case CL_CLASS(CObjectTeleporter):
-            {
-                tx_buildings[1].draw(x + wtr.first, y + wtr.second, *icon_size * 1.5f, *icon_size * 1.5f, colors::white);
-                break;
-            }
-            }
+
             if (ent->m_iMaxHealth() && *healthbar > 0)
             {
                 healthp = (float) ent->m_iHealth() / (float) ent->m_iMaxHealth();
                 clr     = colors::Health(ent->m_iHealth(), ent->m_iMaxHealth());
                 if (healthp > 1.0f)
                     healthp = 1.0f;
-                draw::RectangleOutlined(x + wtr.first, y + wtr.second + (int) icon_size * 1.5f, (int) icon_size * 1.5f, 4, colors::black, 0.5f);
-                draw::Rectangle(x + wtr.first + 1, y + wtr.second + ((int) icon_size + 1) * 1.5f, (*icon_size * 1.5f - 2.0f) * healthp, *healthbar, clr);
+                draw::RectangleOutlined(x + wtr.first, y + wtr.second + (int) icon_size, (int) icon_size, 4, colors::black, 0.5f);
+                draw::Rectangle(x + wtr.first + 1, y + wtr.second + (int) icon_size + 1, (*icon_size - 2.0f) * healthp, *healthbar, clr);
             }
         }
-    }
-    else if (ent->m_Type() == ENTITY_GENERIC)
-    {
-        if (!ent->m_vecDormantOrigin())
-            return;
-        const model_t *model = RAW_ENT(ent)->GetModel();
-        if (model)
+        else if (ent->m_Type() == ENTITY_BUILDING)
         {
-            const auto szName = g_IModelInfo->GetModelName(model);
-            if (show_healthpacks && (Hash::IsHealth(szName)))
+            if (ent->m_iClassID() == CL_CLASS(CObjectDispenser) || ent->m_iClassID() == CL_CLASS(CObjectSentrygun) || ent->m_iClassID() == CL_CLASS(CObjectTeleporter))
             {
+                if (!ent->m_vecDormantOrigin())
+                    return;
                 const auto &wtr = WorldToRadar(ent->m_vecDormantOrigin()->x, ent->m_vecDormantOrigin()->y);
-                float sz        = *icon_size * 0.15f * 0.5f;
-                float sz2       = *icon_size * 0.85;
-                tx_items[0].draw(x + wtr.first + sz, y + wtr.second + sz, sz2, sz2, colors::white);
+                tx_teams[CE_INT(ent, netvar.iTeamNum) - 2].draw(x + wtr.first, y + wtr.second, *icon_size * 1.5f, *icon_size * 1.5f, colors::white);
+                switch (ent->m_iClassID())
+                {
+                case CL_CLASS(CObjectDispenser):
+                {
+                    tx_buildings[0].draw(x + wtr.first, y + wtr.second, *icon_size * 1.5f, *icon_size * 1.5f, colors::white);
+                    break;
+                }
+                case CL_CLASS(CObjectSentrygun):
+                {
+                    int level   = CE_INT(ent, netvar.iUpgradeLevel);
+                    bool IsMini = CE_BYTE(ent, netvar.m_bMiniBuilding);
+                    if (IsMini)
+                        level = 4;
+                    tx_sentry[level - 1].draw(x + wtr.first, y + wtr.second, *icon_size * 1.5f, *icon_size * 1.5f, colors::white);
+                    break;
+                }
+                case CL_CLASS(CObjectTeleporter):
+                {
+                    tx_buildings[1].draw(x + wtr.first, y + wtr.second, *icon_size * 1.5f, *icon_size * 1.5f, colors::white);
+                    break;
+                }
+                }
+                if (ent->m_iMaxHealth() && *healthbar > 0)
+                {
+                    healthp = (float) ent->m_iHealth() / (float) ent->m_iMaxHealth();
+                    clr     = colors::Health(ent->m_iHealth(), ent->m_iMaxHealth());
+                    if (healthp > 1.0f)
+                        healthp = 1.0f;
+                    draw::RectangleOutlined(x + wtr.first, y + wtr.second + (int) icon_size * 1.5f, (int) icon_size * 1.5f, 4, colors::black, 0.5f);
+                    draw::Rectangle(x + wtr.first + 1, y + wtr.second + ((int) icon_size + 1) * 1.5f, (*icon_size * 1.5f - 2.0f) * healthp, *healthbar, clr);
+                }
             }
-            else if (show_ammopacks && (Hash::IsAmmo(szName)))
+        }
+        else if (ent->m_Type() == ENTITY_GENERIC)
+        {
+            if (!ent->m_vecDormantOrigin())
+                return;
+            const model_t *model = RAW_ENT(ent)->GetModel();
+            if (model)
             {
-                const auto &wtr = WorldToRadar(ent->m_vecDormantOrigin()->x, ent->m_vecDormantOrigin()->y);
-                float sz        = *icon_size * 0.15f * 0.5f;
-                float sz2       = *icon_size * 0.85;
-                tx_items[1].draw(x + wtr.first + sz, y + wtr.second + sz, sz2, sz2, colors::white);
+                const auto szName = g_IModelInfo->GetModelName(model);
+                if (show_healthpacks && (Hash::IsHealth(szName)))
+                {
+                    const auto &wtr = WorldToRadar(ent->m_vecDormantOrigin()->x, ent->m_vecDormantOrigin()->y);
+                    float sz        = *icon_size * 0.15f * 0.5f;
+                    float sz2       = *icon_size * 0.85;
+                    tx_items[0].draw(x + wtr.first + sz, y + wtr.second + sz, sz2, sz2, colors::white);
+                }
+                else if (show_ammopacks && (Hash::IsAmmo(szName)))
+                {
+                    const auto &wtr = WorldToRadar(ent->m_vecDormantOrigin()->x, ent->m_vecDormantOrigin()->y);
+                    float sz        = *icon_size * 0.15f * 0.5f;
+                    float sz2       = *icon_size * 0.85;
+                    tx_items[1].draw(x + wtr.first + sz, y + wtr.second + sz, sz2, sz2, colors::white);
+                }
             }
         }
     }
@@ -215,6 +219,7 @@ void Draw()
         return;
     int x, y;
     std::vector<CachedEntity *> enemies{};
+    CachedEntity *ent;
 
     x              = (int) radar_x;
     y              = (int) radar_y;
@@ -239,13 +244,16 @@ void Draw()
     if (enemies_over_teammates)
         enemies.clear();
     std::vector<CachedEntity *> sentries;
-    for (const auto &ent : entity_cache::valid_ents)
+    for (int i = 1; i <= HIGHEST_ENTITY; i++)
     {
+        ent = ENTITY(i);
+        if (CE_INVALID(ent))
+            continue;
         if (ent->m_iTeam() == 0)
             continue;
         if (!ent->m_bAlivePlayer())
             continue;
-        if (ent->m_IDX == g_IEngine->GetLocalPlayer())
+        if (i == g_IEngine->GetLocalPlayer())
             continue;
         if (!show_teammates && ent->m_Type() == ENTITY_PLAYER && !ent->m_bEnemy())
             continue;
@@ -253,9 +261,12 @@ void Draw()
             continue;
         if (ent->m_iClassID() == CL_CLASS(CObjectSentrygun))
             sentries.push_back(ent);
+        else if (!enemies_over_teammates || !show_teammates || ent->m_Type() != ENTITY_PLAYER)
+            DrawEntity(x, y, ent);
         else if (ent->m_bEnemy())
             enemies.push_back(ent);
-        DrawEntity(x, y, ent);
+        else
+            DrawEntity(x, y, ent);
     }
     if (enemies_over_teammates && show_teammates)
         for (auto enemy : enemies)
@@ -292,13 +303,14 @@ static InitRoutine init(
             for (int j = 0; j < 9; ++j)
                 tx_class[i].push_back(textures::atlas().create_sprite(j * 64, 320 + i * 64, 64, 64));
         }
-        for (int i = 0; i < 2; ++i)
+        for (int i = 0; i < 2; i++)
             tx_buildings.push_back(textures::atlas().create_sprite(576 + i * 64, 320, 64, 64));
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 4; i++)
             tx_sentry.push_back(textures::atlas().create_sprite(640 + i * 64, 256, 64, 64));
         logging::Info("Radar sprites loaded");
         EC::Register(EC::Draw, Draw, "radar", EC::average);
     });
 } // namespace hacks::radar
+
 #endif
 #endif
