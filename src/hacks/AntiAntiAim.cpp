@@ -18,7 +18,7 @@ static inline void modifyAngles()
 {
     for (const auto &player : entity_cache::player_cache)
     {
-        if (CE_BAD(player) || !player->m_bAlivePlayer() || !player->m_bEnemy() || !player->player_info->friendsID)
+        if (RAW_ENT(player)->IsDormant() || !player->m_bEnemy() || !player->player_info->friendsID)
             continue;
         auto &data  = resolver_map[player->player_info->friendsID];
         auto &angle = CE_VECTOR(player, netvar.m_angEyeAngles);

@@ -15,7 +15,7 @@ void TFPlayerResource::Update()
     for (const auto &ent_not_raw : entity_cache::valid_ents)
     {
         auto ent = RAW_ENT(ent_not_raw);
-        if (ent && ent->GetClientClass()->m_ClassID == RCC_PLAYERRESOURCE)
+        if (ent->GetClientClass()->m_ClassID == RCC_PLAYERRESOURCE)
         {
             entity = ent_not_raw->m_IDX;
             return;

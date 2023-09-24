@@ -120,5 +120,5 @@ enum
     OBS_MODE_POI,       // PASSTIME point of interest - game objective, big fight, anything interesting; added in the middle of the enum due to tons of hard-coded "<ROAMING" enum compares
     OBS_MODE_ROAMING,   // free roaming
 
-    NUM_OBSERVER_MODES,
+    NUM_OBSERVER_MODES
 };

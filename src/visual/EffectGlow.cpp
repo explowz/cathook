@@ -448,7 +448,7 @@ void EffectGlow::Render(int x, int y, int w, int h)
     for (const auto &ent_non_raw : entity_cache::valid_ents)
     {
         auto ent = RAW_ENT(ent_non_raw);
-        if (ent && ShouldRenderGlow(ent))
+        if (ShouldRenderGlow(ent))
             RenderGlow(ent);
     }
     EndRenderGlow();
@@ -459,7 +459,7 @@ void EffectGlow::Render(int x, int y, int w, int h)
         for (auto &non_raw : entity_cache::valid_ents)
         {
             auto ent = RAW_ENT(non_raw);
-            if (ent && ShouldRenderGlow(ent))
+            if (ShouldRenderGlow(ent))
                 DrawToStencil(ent);
         }
         EndStenciling();

@@ -284,7 +284,7 @@ static void CreateMoveEarly()
 
         auto &ent_data = bt_data[index];
 
-        if (CE_BAD(ent) || !ent->m_bAlivePlayer() || HasCondition<TFCond_HalloweenGhostMode>(ent) || !ent->m_bEnemy())
+        if (RAW_ENT(ent)->IsDormant() || HasCondition<TFCond_HalloweenGhostMode>(ent) || !ent->m_bEnemy())
         {
             ent_data.clear();
             continue;

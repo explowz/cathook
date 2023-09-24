@@ -51,14 +51,28 @@ std::vector<KeyValues *> Iterate(KeyValues *event, int depth)
     for (int i = 0; i < depth; i++)
     {
         for (auto ev : peer_list)
+        {
             for (KeyValues *dat2 = ev; dat2 != nullptr; dat2 = dat2->m_pPeer)
+            {
                 if (std::find(peer_list.begin(), peer_list.end(), dat2) == peer_list.end())
+                {
                     peer_list.push_back(dat2);
+                }
+            }
+        }
+
         for (auto ev : peer_list)
+        {
             for (KeyValues *dat2 = ev; dat2 != nullptr; dat2 = dat2->m_pSub)
+            {
                 if (std::find(peer_list.begin(), peer_list.end(), dat2) == peer_list.end())
+                {
                     peer_list.push_back(dat2);
+                }
+            }
+        }
     }
+
     return peer_list;
 }
 
@@ -75,10 +89,8 @@ void ParseKeyValue(KeyValues *event)
         switch (dat->m_iDataType)
         {
         case KeyValues::types_t::TYPE_NONE:
-        {
             logging::Info("%s is typeless", name);
             break;
-        }
         case KeyValues::types_t::TYPE_STRING:
         {
             if (dat->m_sValue && *(dat->m_sValue))
@@ -89,41 +101,25 @@ void ParseKeyValue(KeyValues *event)
             {
                 logging::Info("%s is String: %s", name, "");
             }
-            break;
-        }
-        case KeyValues::types_t::TYPE_WSTRING:
-        {
-            break;
-        }
 
+            break;
+        }
         case KeyValues::types_t::TYPE_INT:
-        {
             logging::Info("%s is int: %d", name, dat->m_iValue);
             break;
-        }
-
         case KeyValues::types_t::TYPE_UINT64:
-        {
             logging::Info("%s is double: %f", name, *(double *) dat->m_sValue);
             break;
-        }
-
         case KeyValues::types_t::TYPE_FLOAT:
-        {
             logging::Info("%s is float: %f", name, dat->m_flValue);
             break;
-        }
         case KeyValues::types_t::TYPE_COLOR:
-        {
             logging::Info("%s is Color: { %u %u %u %u}", name, dat->m_Color[0], dat->m_Color[1], dat->m_Color[2], dat->m_Color[3]);
             break;
-        }
         case KeyValues::types_t::TYPE_PTR:
-        {
             logging::Info("%s is Pointer: %x", name, dat->m_pValue);
             break;
-        }
-
+        case KeyValues::types_t::TYPE_WSTRING:
         default:
             break;
         }
@@ -140,14 +136,20 @@ void ProcessAchievement(IGameEvent *ach)
         bool reply = achievement == CAT_IDENTIFY;
         player_info_s info{};
         if (!g_IEngine->GetPlayerInfo(player_idx, &info))
+        {
             return;
+        }
+
         if (reply && *answerIdentify && player_idx != g_pLocalPlayer->entity_idx)
         {
             send_achievement_reply_timer.update();
             send_achievement_reply = true;
         }
+
         if (playerlist::ChangeState(info.friendsID, playerlist::k_EState::CAT))
+        {
             PrintChat("Detected \x07%06X%s\x01 as a Cathook user", 0xe1ad01, info.name);
+        }
     }
 }
 
@@ -174,9 +176,13 @@ static InitRoutine run_identify(
                     sendIdentifyMessage(true);
                     send_achievement_reply = false;
                 }
+
                 // It is safe to send every 15ish seconds, small packet
                 if (!*identify || CE_BAD(LOCAL_E) || !identify_timer.test_and_set(15000))
+                {
                     return;
+                }
+
                 sendIdentifyMessage(false);
             },
             "sendnetmsg_createmove");
@@ -188,7 +194,10 @@ static InitRoutine run_identify(
 DEFINE_HOOKED_METHOD(SendNetMsg, bool, INetChannel *this_, INetMessage &msg, bool force_reliable, bool voice)
 {
     if (!isHackActive())
+    {
         return original::SendNetMsg(this_, msg, force_reliable, voice);
+    }
+
     size_t say_idx, say_team_idx;
     int offset;
     std::string newlines{};
@@ -196,10 +205,14 @@ DEFINE_HOOKED_METHOD(SendNetMsg, bool, INetChannel *this_, INetMessage &msg, boo
 
     // Do we have to force reliable state?
     if (hacks::nospread::SendNetMessage(&msg))
+    {
         force_reliable = true;
+    }
     // Don't use warp with nospread
     else
+    {
         hacks::warp::SendNetMessage(msg);
+    }
 
     hacks::antianticheat::SendNetMsg(msg);
 
@@ -223,7 +236,10 @@ DEFINE_HOOKED_METHOD(SendNetMsg, bool, INetChannel *this_, INetMessage &msg, boo
                 {
                     int sub_val = 2;
                     if (msg.find("!!!") == 0)
+                    {
                         sub_val = 3;
+                    }
+
                     // Message is sent over Nullnexus.
                     std::string substrmsg(msg.substr(sub_val));
                     nullnexus::sendmsg(substrmsg);
@@ -250,29 +266,38 @@ DEFINE_HOOKED_METHOD(SendNetMsg, bool, INetChannel *this_, INetMessage &msg, boo
     {
         lastcmd = g_GlobalVars->absoluteframetime;
     }
+
     if (!strcmp(msg.GetName(), "clc_CmdKeyValues"))
     {
         hacks::antiaim::SendNetMessage(msg);
-        hacks::catbot::SendNetMsg(msg);
+        // hacks::catbot::SendNetMsg(msg);
     }
+
     if (log_sent && msg.GetType() != 3 && msg.GetType() != 9)
     {
         if (!strcmp(msg.GetName(), "clc_CmdKeyValues"))
+        {
             if ((KeyValues *) (((unsigned *) &msg)[4]))
+            {
                 ParseKeyValue((KeyValues *) (((unsigned *) &msg)[4]));
+            }
+        }
+
         logging::Info("=> %s [%i] %s", msg.GetName(), msg.GetType(), msg.ToString());
         unsigned char buf[4096];
         bf_write buffer("cathook_debug_buffer", buf, 4096);
         logging::Info("Writing %i", msg.WriteToBuffer(buffer));
         std::string bytes;
         constexpr char h2c[] = "0123456789abcdef";
-        for (int i = 0; i < buffer.GetNumBytesWritten(); i++)
+        for (int i = 0; i < buffer.GetNumBytesWritten(); ++i)
         {
             bytes += format(h2c[(buf[i] & 0xF0) >> 4], h2c[(buf[i] & 0xF)], ' ');
             // bytes += format((unsigned short) buf[i], ' ');
         }
+
         logging::Info("%i bytes => %s", buffer.GetNumBytesWritten(), bytes.c_str());
     }
+
     bool ret_val = original::SendNetMsg(this_, msg, force_reliable, voice);
     hacks::nospread::SendNetMessagePost();
     return ret_val;

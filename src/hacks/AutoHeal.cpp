@@ -99,9 +99,9 @@ int BulletDangerValue(CachedEntity *patient)
     // Find dangerous snipers in other team
     for (const auto &ent: entity_cache::player_cache)
     {
-        if (CE_BAD(ent))
+        if (RAW_ENT(ent)->IsDormant())
             continue;
-        if (!ent->m_bAlivePlayer() || !ent->m_bEnemy())
+        if (!ent->m_bEnemy())
             continue;
         if (g_pPlayerResource->GetClass(ent) != tf_sniper)
             continue;
@@ -143,17 +143,15 @@ int FireDangerValue(CachedEntity *patient)
     {
         for (const auto &ent: entity_cache::player_cache)
         {
-            if (CE_BAD(ent))
+            if (RAW_ENT(ent)->IsDormant())
                 continue;
             if (!ent->m_bEnemy())
-                continue;
-            if (!ent->m_bAlivePlayer())
                 continue;
             if (!player_tools::shouldTarget(ent))
                 continue;
             if (g_pPlayerResource->GetClass(ent) != tf_pyro)
                 continue;
-            if (patient->m_vecOrigin().DistTo(ent->m_vecOrigin()) > (int) auto_vacc_pyro_range)
+            if (patient->m_vecOrigin().DistToSqr(ent->m_vecOrigin()) > Sqr(*auto_vacc_pyro_range))
                 continue;
             if (*auto_vacc_pop_if_pyro == 2)
                 return 2;
@@ -425,7 +423,7 @@ void UpdateData()
     {
         if (reset_cd[ent->m_IDX].test_and_set(10000))
             data[ent->m_IDX] = {};
-        if (CE_GOOD(ent) && ent->m_bAlivePlayer())
+        if (!RAW_ENT(ent)->IsDormant())
         {
             int health = ent->m_iHealth();
             if (data[ent->m_IDX].last_damage > g_GlobalVars->curtime)
@@ -437,7 +435,7 @@ void UpdateData()
                 data[ent->m_IDX].accum_damage_start = 0.0f;
             }
             const int last_health = data[ent->m_IDX].last_health;
-            if (health != last_health && health <= g_pPlayerResource->GetMaxHealth(ent))
+            if (health != last_health && health <= ent->m_iMaxHealth())
             {
                 reset_cd[ent->m_IDX].update();
                 data[ent->m_IDX].last_health = health;

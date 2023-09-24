@@ -20,7 +20,7 @@ static void CreateMove()
     bool should_test_viewmodel = true;
     for (const auto &ent: entity_cache::player_cache)
     {
-        if (CE_BAD(ent) || !ent->m_bEnemy() || !ent->m_bAlivePlayer() || ent == LOCAL_E)
+        if (RAW_ENT(ent)->IsDormant() || !ent->m_bEnemy() || ent == LOCAL_E)
             continue;
         auto eye   = g_pLocalPlayer->v_Eye;
         auto angle = GetAimAtAngles(eye, ent->m_vecOrigin());
@@ -39,7 +39,7 @@ static void CreateMove()
         cl_flipviewmodels->SetValue(!cl_flipviewmodels->GetBool());
         for (const auto &ent: entity_cache::player_cache)
         {
-            if (CE_BAD(ent) || !ent->m_bEnemy() || !ent->m_bAlivePlayer() || ent == LOCAL_E)
+            if (RAW_ENT(ent)->IsDormant() || !ent->m_bEnemy() || ent == LOCAL_E)
                 continue;
             auto eye   = g_pLocalPlayer->v_Eye;
             auto angle = GetAimAtAngles(eye, ent->m_vecOrigin());

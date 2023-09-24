@@ -39,7 +39,7 @@ static void vote_rage_back()
     for (const auto &ent : entity_cache::player_cache)
     {
         // TO DO: m_bEnemy check only when you can't vote off players from the opposite team
-        if (ent == LOCAL_E || ent->m_bEnemy())
+        if (ent->m_bEnemy() || ent == LOCAL_E)
             continue;
 
         if (!GetPlayerInfo(ent->m_IDX, &info))

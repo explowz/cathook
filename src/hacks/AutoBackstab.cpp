@@ -23,9 +23,13 @@ DetourHook melee_range_hook{};
 typedef int (*GetSwingRange_o)(IClientEntity *);
 int GetSwingRange_hook(IClientEntity *_this)
 {
-    float return_val = ((GetSwingRange_o) melee_range_hook.GetOriginalFunc())(_this);
-    if (decrease_range)
-        return_val *= 0.5f;
+    int return_val = ((GetSwingRange_o) melee_range_hook.GetOriginalFunc())(_this);
+
+    if (*decrease_range)
+    {
+        return_val /= 2;
+    }
+
     melee_range_hook.RestorePatch();
     return return_val;
 }
@@ -111,8 +115,11 @@ int ClosestDistanceHitbox(CachedEntity *target)
     {
         auto hitbox = target->hitboxes.GetHitbox(i);
         if (!hitbox)
+        {
             continue;
-        dist = g_pLocalPlayer->v_Eye.DistTo(hitbox->center);
+        }
+
+        dist = g_pLocalPlayer->v_Eye.DistToSqr(hitbox->center);
         if (dist < closest_dist)
         {
             closest      = i;
@@ -121,13 +128,14 @@ int ClosestDistanceHitbox(CachedEntity *target)
     }
     return closest;
 }
+
 int ClosestDistanceHitbox(hacks::backtrack::BacktrackData btd)
 {
     int closest        = -1;
     float closest_dist = FLT_MAX, dist;
     for (int i = pelvis; i < spine_3; ++i)
     {
-        dist = g_pLocalPlayer->v_Eye.DistTo(btd.hitboxes.at(i).center);
+        dist = g_pLocalPlayer->v_Eye.DistToSqr(btd.hitboxes.at(i).center);
         if (dist < closest_dist)
         {
             closest      = i;
@@ -142,10 +150,14 @@ bool canFaceStab(CachedEntity *ent)
     int w_index = CE_INT(LOCAL_W, netvar.iItemDefinitionIndex);
 
     if (w_index == 40000)
+    {
         return false;
+    }
 
     if (HasCondition<TFCond_MiniCritOnKill>(LOCAL_E) || HasCondition<TFCond_Jarated>(ent))
+    {
         return ent->m_iHealth() <= 54;
+    }
 
     return ent->m_iHealth() <= 40;
 }
@@ -156,9 +168,14 @@ bool angleCheck(CachedEntity *from, CachedEntity *to, std::optional<Vector> targ
 
     Vector vecToTarget;
     if (target_pos)
+    {
         vecToTarget = *target_pos - from->m_vecOrigin();
+    }
     else
+    {
         vecToTarget = to->m_vecOrigin() - from->m_vecOrigin();
+    }
+
     vecToTarget.z = 0;
     vecToTarget.NormalizeInPlace();
 
@@ -173,11 +190,20 @@ bool angleCheck(CachedEntity *from, CachedEntity *to, std::optional<Vector> targ
     vecTargetForward.NormalizeInPlace();
 
     if (DotProduct(vecToTarget, vecTargetForward) <= 0.0f)
+    {
         return false;
+    }
+
     if (DotProduct(vecToTarget, vecOwnerForward) <= 0.5f)
+    {
         return false;
+    }
+
     if (DotProduct(vecOwnerForward, vecTargetForward) <= -0.3f)
+    {
         return false;
+    }
+
     return true;
 }
 
@@ -191,8 +217,11 @@ static bool angleCheck(CachedEntity *target, std::optional<Vector> target_pos, V
     Vector local_worldspace;
     VectorLerp(RAW_ENT(LOCAL_E)->GetCollideable()->OBBMins(), RAW_ENT(LOCAL_E)->GetCollideable()->OBBMaxs(), 0.5f, local_worldspace);
     local_worldspace += LOCAL_E->m_vecOrigin();
+
     if (target_pos)
+    {
         vecToTarget = *target_pos - local_worldspace;
+    }
     else
     {
         Vector target_worldspace;
@@ -228,60 +257,84 @@ static bool doLegitBackstab()
 {
     trace_t trace;
     ApplySwingHook();
+
     if (!re::C_TFWeaponBaseMelee::DoSwingTrace(RAW_ENT(LOCAL_W), &trace))
     {
         RemoveSwingHook();
         return false;
     }
+
     RemoveSwingHook();
 
     if (!trace.m_pEnt)
+    {
         return false;
+    }
+
     int index = reinterpret_cast<IClientEntity *>(trace.m_pEnt)->entindex();
     auto ent  = ENTITY(index);
     if (index == 0 || index > g_GlobalVars->maxClients || !ent->m_bEnemy() || !player_tools::shouldTarget(ent) || IsPlayerInvulnerable(ent))
+    {
         return false;
+    }
+
     if (angleCheck(ENTITY(index), std::nullopt, g_pLocalPlayer->v_OrigViewangles) || canFaceStab(ENTITY(index)))
     {
         current_user_cmd->buttons |= IN_ATTACK;
         return true;
     }
+
     return false;
 }
 
 static bool doRageBackstab()
 {
     if (doLegitBackstab())
-        return true;
-    trace_t trace;
-    float swingrange = re::C_TFWeaponBaseMelee::GetSwingRange(RAW_ENT(LOCAL_W));
-    // AimAt Autobackstab
     {
-        for (const auto &ent : entity_cache::player_cache)
-        {
-            if (CE_BAD(ent) || ent->m_flDistance() > swingrange * 4 || !ent->m_bEnemy() || !ent->m_bAlivePlayer() || g_pLocalPlayer->entity_idx == ent->m_IDX || IsPlayerInvulnerable(ent))
-                continue;
-            if (!player_tools::shouldTarget(ent))
-                continue;
-            auto hitbox = ClosestDistanceHitbox(ent);
-            if (hitbox == -1)
-                continue;
+        return true;
+    }
 
-            Vector aim_pos = ent->m_vecOrigin();
-            aim_pos.z      = ent->hitboxes.GetHitbox(hitbox)->center.z;
-            auto angle     = GetAimAtAngles(g_pLocalPlayer->v_Eye, aim_pos, LOCAL_E);
-            if (!angleCheck(ent, std::nullopt, angle) && !canFaceStab(ent))
-                continue;
-            if (doSwingTraceAngle(angle, trace) && ((IClientEntity *) trace.m_pEnt)->entindex() == ent->m_IDX)
-            {
-                current_user_cmd->buttons |= IN_ATTACK;
-                g_pLocalPlayer->bUseSilentAngles = true;
-                current_user_cmd->viewangles     = angle;
-                *bSendPackets                    = true;
-                return true;
-            }
+    trace_t trace;
+    int swingrange = re::C_TFWeaponBaseMelee::GetSwingRange(RAW_ENT(LOCAL_W));
+
+    // AimAt Autobackstab
+    for (const auto &ent : entity_cache::player_cache)
+    {
+        if (RAW_ENT(ent)->IsDormant() || ent->m_flDistance() > static_cast<float>(swingrange) * 4.0f || !ent->m_bEnemy() || ent == LOCAL_E || IsPlayerInvulnerable(ent))
+        {
+            continue;
+        }
+
+        if (!player_tools::shouldTarget(ent))
+        {
+            continue;
+        }
+
+        auto hitbox = ClosestDistanceHitbox(ent);
+        if (hitbox == -1)
+        {
+            continue;
+        }
+
+
+        Vector aim_pos = ent->m_vecOrigin();
+        aim_pos.z      = ent->hitboxes.GetHitbox(hitbox)->center.z;
+        auto angle     = GetAimAtAngles(g_pLocalPlayer->v_Eye, aim_pos, LOCAL_E);
+        if (!angleCheck(ent, std::nullopt, angle) && !canFaceStab(ent))
+        {
+            continue;
+        }
+
+        if (doSwingTraceAngle(angle, trace) && ((IClientEntity *) trace.m_pEnt)->entindex() == ent->m_IDX)
+        {
+            current_user_cmd->buttons |= IN_ATTACK;
+            g_pLocalPlayer->bUseSilentAngles = true;
+            current_user_cmd->viewangles     = angle;
+            *bSendPackets                    = true;
+            return true;
         }
     }
+
     // Rotating Autobackstab, only use if we hit the world
     if (trace.DidHit() && (IClientEntity *) trace.m_pEnt == g_IEntityList->GetClientEntity(0))
     {
@@ -294,14 +347,20 @@ static bool doRageBackstab()
                 int index = reinterpret_cast<IClientEntity *>(trace.m_pEnt)->entindex();
                 auto ent  = ENTITY(index);
                 if (index == 0 || index > PLAYER_ARRAY_SIZE || !ent->m_bEnemy() || !player_tools::shouldTarget(ent) || IsPlayerInvulnerable(ent))
+                {
                     continue;
+                }
+
                 if (angleCheck(ent, std::nullopt, newangle))
+                {
                     yangles.push_back(newangle.y);
+                }
             }
         }
+
         if (!yangles.empty())
         {
-            newangle.y = yangles.at(std::floor((float) yangles.size() / 2));
+            newangle.y = yangles.at(std::floor(static_cast<float>(yangles.size()) / 2.0f));
             current_user_cmd->buttons |= IN_ATTACK;
             current_user_cmd->viewangles     = newangle;
             g_pLocalPlayer->bUseSilentAngles = true;
@@ -309,6 +368,7 @@ static bool doRageBackstab()
             return true;
         }
     }
+
     return false;
 }
 // Make accessible to the filter
@@ -325,12 +385,15 @@ bool IsTickGood(const hacks::backtrack::BacktrackData &tick)
 
     Vector angle = GetAimAtAngles(g_pLocalPlayer->v_Eye, target_worldspace);
     if (legit_stab)
+    {
         angle = current_user_cmd->viewangles;
+    }
 
     if (!angleCheck(ent, target_worldspace, angle))
+    {
         return false;
+    }
 
-    trace_t();
     if (doMovedSwingTrace(ent, target_vec))
     {
         newangle_apply = angle;
@@ -351,13 +414,20 @@ static bool doBacktrackStab(bool legit = false)
     {
         // Found a target, break out
         if (stab_ent)
+        {
             break;
+        }
+
         // Targeting checks
-        if (CE_BAD(ent) || !ent->m_bAlivePlayer() || !ent->m_bEnemy() || !player_tools::shouldTarget(ent) || IsPlayerInvulnerable(ent))
+        if (RAW_ENT(ent)->IsDormant() || !ent->m_bEnemy() || !player_tools::shouldTarget(ent) || IsPlayerInvulnerable(ent))
+        {
             continue;
+        }
+
 
         auto good_ticks = hacks::backtrack::getGoodTicks(ent);
         if (good_ticks)
+        {
             for (auto &bt_tick : *good_ticks)
             {
                 if (IsTickGood(bt_tick))
@@ -368,6 +438,7 @@ static bool doBacktrackStab(bool legit = false)
                     break;
                 }
             }
+        }
     }
 
     // We found a good ent
@@ -380,24 +451,36 @@ static bool doBacktrackStab(bool legit = false)
         *bSendPackets                    = true;
         return true;
     }
+
     return false;
 }
 
 inline bool HasKnife()
 {
     if (re::C_TFWeaponBase::GetWeaponID(RAW_ENT(LOCAL_W)) == 7)
+    {
         return true;
+    }
+
     return false;
 }
 
 static void CreateMove()
 {
-    if (!enabled)
+    if (!*enabled)
+    {
         return;
+    }
+
     if (CE_BAD(LOCAL_E) || g_pLocalPlayer->alive || CE_BAD(LOCAL_W) || !HasKnife() || IsPlayerInvisible(LOCAL_E) || CE_BYTE(LOCAL_E, netvar.m_bFeignDeathReady))
+    {
         return;
+    }
+
     if (!CanShoot())
+    {
         return;
+    }
 
     bool shouldBacktrack = backtrack::backtrackEnabled() && !backtrack::hasData();
     switch (*mode)
@@ -409,10 +492,14 @@ static void CreateMove()
         doRageBackstab();
         break;
     case 2:
+    {
         if (shouldBacktrack)
         {
             if (*hacks::backtrack::latency <= 190 && doRageBackstab())
+            {
                 break;
+            }
+
             doBacktrackStab(false);
         }
         else
@@ -420,7 +507,9 @@ static void CreateMove()
             doRageBackstab();
         }
         break;
+    }
     case 3:
+    {
         if (shouldBacktrack)
         {
             if (*hacks::backtrack::latency <= 190 && doLegitBackstab())
@@ -431,9 +520,7 @@ static void CreateMove()
         {
             doLegitBackstab();
         }
-        break;
-    default:
-        break;
+    }
     }
 }
 

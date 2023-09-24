@@ -164,13 +164,13 @@ void Update()
 
         for (const auto &ent : entity_cache::valid_ents)
         {
+            int iTeam = ent->m_iTeam();
             // Not the object we need or invalid (team)
-            if (ent->m_iClassID() != CL_CLASS(CObjectCartDispenser) || ent->m_iTeam() < TEAM_RED || ent->m_iTeam() > TEAM_BLU)
+            if (ent->m_iClassID() != CL_CLASS(CObjectCartDispenser) || iTeam < TEAM_RED || iTeam > TEAM_BLU)
                 continue;
-            int team = ent->m_iTeam();
 
             // Add new entry for the team
-            payloads.at(team - TEAM_RED).push_back(ent);
+            payloads.at(iTeam - TEAM_RED).push_back(ent);
         }
     }
 }

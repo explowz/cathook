@@ -1,3 +1,7 @@
+//
+// Created by Bintr
+//
+
 #include <settings/Bool.hpp>
 #include "common.hpp"
 
@@ -12,12 +16,16 @@ static settings::Boolean enable{ "remove.taunts", "false" };
 static void CreateMove()
 {
     if (!*enable)
+    {
         return;
+    }
 
     for (const auto &ent : entity_cache::player_cache)
     {
-        if (RAW_ENT(ent)->IsDormant() || ent->m_Type() != ENTITY_PLAYER)
+        if (RAW_ENT(ent)->IsDormant() || !HasCondition<TFCond_Taunting>(ent) || ent == LOCAL_E)
+        {
             continue;
+        }
 
         RemoveCondition<TFCond_Taunting>(ent);
     }
@@ -26,7 +34,7 @@ static void CreateMove()
 static InitRoutine EC(
     []()
     {
-        EC::Register(EC::CreateMove, CreateMove, "antitaunts", EC::average);
-        EC::Register(EC::CreateMoveWarp, CreateMove, "antitaunts_w", EC::average);
+        EC::Register(EC::CreateMove, CreateMove, "CM_AntiTaunt");
+        EC::Register(EC::CreateMoveWarp, CreateMove, "CMW_AntiTaunt");
     });
 } // namespace hacks::antitaunts

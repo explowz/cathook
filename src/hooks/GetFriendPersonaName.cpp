@@ -39,9 +39,9 @@ bool StolenName()
     for (const auto &ent: entity_cache::player_cache)
     {
         // Check if ent is a good target
-        if (ent->m_IDX == g_pLocalPlayer->entity_idx)
+        if (ent == LOCAL_E)
             continue;
-        if (g_pPlayerResource->GetTeam(ent->m_IDX) != g_pLocalPlayer->team)
+        if (ent->m_iTeam() != g_pLocalPlayer->team)
             continue;
 
         // Check if name is current one

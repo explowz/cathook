@@ -128,18 +128,15 @@ CachedEntity *getClosestSpell()
     for (auto &spell : entity_cache::valid_ents)
     {
         const model_t *model = RAW_ENT(spell)->GetModel();
-        if (model)
+        const auto szName = g_IModelInfo->GetModelName(model);
+        if (!spell->m_vecDormantOrigin() || (!Hash::IsSpellbook(szName) && !Hash::IsSpellbookRare(szName)))
+            continue;
+        float dist = spell->m_flDistance();
+        if (dist < best_dist || (is_dormant && !RAW_ENT(spell)->IsDormant() && dist <= 300.0f))
         {
-            const auto szName = g_IModelInfo->GetModelName(model);
-            if (!spell->m_vecDormantOrigin() || (!Hash::IsSpellbook(szName) && !Hash::IsSpellbookRare(szName)))
-                continue;
-            float dist = spell->m_flDistance();
-            if (dist < best_dist || (is_dormant && !RAW_ENT(spell)->IsDormant() && dist <= 300.0f))
-            {
-                ent        = spell;
-                best_dist  = dist;
-                is_dormant = RAW_ENT(spell)->IsDormant();
-            }
+            ent        = spell;
+            best_dist  = dist;
+            is_dormant = RAW_ENT(spell)->IsDormant();
         }
     }
     return ent;
@@ -154,80 +151,77 @@ static void CreateMoveLate()
     auto spell = getClosestSpell();
 
     const model_t *model = RAW_ENT(spell)->GetModel();
-    if (model)
+    const auto szName = g_IModelInfo->GetModelName(model);
+    // Apply bad effects for enemies
+    if (RAW_ENT(spell)->IsDormant() || spell->m_flDistance() > 300.0f)
     {
-        const auto szName = g_IModelInfo->GetModelName(model);
-        // Apply bad effects for enemies
-        if (CE_BAD(spell) || spell->m_flDistance() > 300.0f)
+        int spellindex;
+
+        auto spellmode = getSpellMode();
+        switch (spellmode)
         {
-            int spellindex;
-
-            auto spellmode = getSpellMode();
-            switch (spellmode)
-            {
-            case BUMPER_CARS:
-                spellindex = *bumper_spell_enemies;
-                break;
-            case DOOMSDAY:
-                spellindex = *doomsday_spell_enemies;
-                break;
-            case HELLTOWER:
-                spellindex = *helltower_spell_enemies;
-                break;
-            case NORMAL:
-                spellindex = *default_spell_enemies;
-                break;
-            }
-
-            cmd = getCommandForSpellID(spellindex, 0);
-        }
-        else if (Hash::IsSpellbook(szName))
-        {
-            int spellindex;
-
-            auto spellmode = getSpellMode();
-            switch (spellmode)
-            {
-            case BUMPER_CARS:
-                spellindex = *bumper_spell;
-                break;
-            case DOOMSDAY:
-                spellindex = *doomsday_spell;
-                break;
-            case HELLTOWER:
-                spellindex = *helltower_spell;
-                break;
-            case NORMAL:
-                spellindex = *default_spell;
-                break;
-            }
-
-            cmd = getCommandForSpellID(spellindex, 0);
-        }
-        else
-        {
-            int spellindex;
-
-            auto spellmode = getSpellMode();
-            switch (spellmode)
-            {
-            case DOOMSDAY:
-                spellindex = *doomsday_spell_rare;
-                break;
-            case HELLTOWER:
-            case BUMPER_CARS:
-            case NORMAL:
-                spellindex = *default_spell_rare;
-                break;
-            }
-            cmd = getCommandForSpellID(spellindex, 1);
+        case BUMPER_CARS:
+            spellindex = *bumper_spell_enemies;
+            break;
+        case DOOMSDAY:
+            spellindex = *doomsday_spell_enemies;
+            break;
+        case HELLTOWER:
+            spellindex = *helltower_spell_enemies;
+            break;
+        case NORMAL:
+            spellindex = *default_spell_enemies;
+            break;
         }
 
-        if (cmd != -1)
+        cmd = getCommandForSpellID(spellindex, 0);
+    }
+    else if (Hash::IsSpellbook(szName))
+    {
+        int spellindex;
+
+        auto spellmode = getSpellMode();
+        switch (spellmode)
         {
-            current_late_user_cmd->command_number = cmd;
-            current_late_user_cmd->random_seed    = MD5_PseudoRandom(cmd) & 0x7FFFFFFF;
+        case BUMPER_CARS:
+            spellindex = *bumper_spell;
+            break;
+        case DOOMSDAY:
+            spellindex = *doomsday_spell;
+            break;
+        case HELLTOWER:
+            spellindex = *helltower_spell;
+            break;
+        case NORMAL:
+            spellindex = *default_spell;
+            break;
         }
+
+        cmd = getCommandForSpellID(spellindex, 0);
+    }
+    else
+    {
+        int spellindex;
+
+        auto spellmode = getSpellMode();
+        switch (spellmode)
+        {
+        case DOOMSDAY:
+            spellindex = *doomsday_spell_rare;
+            break;
+        case HELLTOWER:
+        case BUMPER_CARS:
+        case NORMAL:
+            spellindex = *default_spell_rare;
+            break;
+        }
+        cmd = getCommandForSpellID(spellindex, 1);
+    }
+
+    if (cmd != -1)
+    {
+        current_late_user_cmd->command_number = cmd;
+        current_late_user_cmd->random_seed    = MD5_PseudoRandom(cmd) & 0x7FFFFFFF;
     }
 }
 

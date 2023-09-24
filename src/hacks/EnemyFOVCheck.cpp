@@ -51,7 +51,7 @@ static void FOVCheck()
     {
         if (RAW_ENT(ent)->IsDormant())
             continue;
-        if (!ent->m_bAlivePlayer() || !ent->m_bEnemy())
+        if (!ent->m_bEnemy())
             continue;
         if (!player_tools::shouldTarget(ent))
             continue;

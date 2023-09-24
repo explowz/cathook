@@ -662,8 +662,7 @@ static void CreateMove()
     // We need to update player states regardless, else we can't sync the observed crit chance
     for (const auto &ent : entity_cache::player_cache)
     {
-        // no valid check needed, GetHealth only uses m_IDX
-        if (g_pPlayerResource->GetHealth(ent))
+        if (ent->m_iHealth() > 0)
         {
             auto &status = player_status_list[ent->m_IDX - 1];
             // Only sync if not updated recently in player_hurt

@@ -20,18 +20,33 @@ static settings::Boolean no_invisibility{ "remove.cloak", "false" };
 static void CreateMove()
 {
     if (!*enable && !*no_invisibility)
+    {
         return;
+    }
 
     for (const auto &ent : entity_cache::player_cache)
     {
-        if (CE_BAD(ent) || ent == LOCAL_E || ent->m_Type() != ENTITY_PLAYER || CE_INT(ent, netvar.iClass) != tf_class::tf_spy)
+        if (RAW_ENT(ent)->IsDormant() || CE_INT(ent, netvar.iClass) != tf_class::tf_spy || ent == LOCAL_E)
+        {
             continue;
-        if (*enable)
+        }
+
+        if (HasCondition<TFCond_Disguised>(ent))
+        {
             RemoveCondition<TFCond_Disguised>(ent);
+        }
+
         if (*no_invisibility)
         {
-            RemoveCondition<TFCond_Cloaked>(ent);
-            RemoveCondition<TFCond_CloakFlicker>(ent);
+            if (HasCondition<TFCond_Cloaked>(ent))
+            {
+                RemoveCondition<TFCond_Cloaked>(ent);
+            }
+
+            if (HasCondition<TFCond_CloakFlicker>(ent))
+            {
+                RemoveCondition<TFCond_CloakFlicker>(ent);
+            }
         }
     }
 }
@@ -39,7 +54,7 @@ static void CreateMove()
 static InitRoutine EC(
     []()
     {
-        EC::Register(EC::CreateMove, CreateMove, "antidisguise", EC::average);
-        EC::Register(EC::CreateMoveWarp, CreateMove, "antidisguise_w", EC::average);
+        EC::Register(EC::CreateMove, CreateMove, "CM_AntiDisguise", EC::average);
+        EC::Register(EC::CreateMoveWarp, CreateMove, "CMW_AntiDisguise", EC::average);
     });
 } // namespace hacks::antidisguise

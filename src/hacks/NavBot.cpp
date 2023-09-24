@@ -142,14 +142,11 @@ std::vector<CachedEntity *> getEntities(bool find_health)
     for (const auto &ent : entity_cache::valid_ents)
     {
         const model_t *model = RAW_ENT(ent)->GetModel();
-        if (model)
+        const auto szName = g_IModelInfo->GetModelName(model);
+        if (find_health && Hash::IsHealth(szName) || !find_health && Hash::IsAmmo(szName))
         {
-            const auto szName = g_IModelInfo->GetModelName(model);
-            if (find_health && Hash::IsHealth(szName) || !find_health && Hash::IsAmmo(szName))
-            {
-                entities.push_back(ent);
-                break;
-            }
+            entities.push_back(ent);
+            break;
         }
     }
     // Sort by distance, closer is better
@@ -284,7 +281,7 @@ std::pair<CachedEntity *, float> getNearestPlayerDistance()
 
     for (const auto &ent : entity_cache::player_cache)
     {
-        if (!ent->m_vecDormantOrigin() || !g_pPlayerResource->isAlive(ent->m_IDX) || !ent->m_bEnemy() || !player_tools::shouldTarget(ent))
+        if (!ent->m_vecDormantOrigin() || !ent->m_bEnemy() || !player_tools::shouldTarget(ent))
             continue;
 
         const auto ent_origin = *ent->m_vecDormantOrigin();
@@ -521,11 +518,8 @@ void updateEnemyBlacklist(int slot)
     std::vector<std::pair<CachedEntity *, Vector>> checked_origins;
     for (const auto &ent : entity_cache::player_cache)
     {
-        // Entity is generally invalid, ignore
-        if (CE_INVALID(ent) || !g_pPlayerResource->isAlive(ent->m_IDX))
-            continue;
         // On our team, do not care
-        if (g_pPlayerResource->GetTeam(ent->m_IDX) == g_pLocalPlayer->team)
+        if (ent->m_iTeam() == g_pLocalPlayer->team)
             continue;
 
         bool is_dormant = RAW_ENT(ent)->IsDormant();
@@ -780,9 +774,9 @@ bool runReload()
     float best_distance                 = FLT_MAX;
     for (const auto &ent : entity_cache::player_cache)
     {
-        if (CE_BAD(ent))
+        if (RAW_ENT(ent)->IsDormant())
             continue;
-        if (!ent->m_bAlivePlayer() || !ent->m_bEnemy())
+        if (!ent->m_bEnemy())
             continue;
         const auto dist_sq = ent->m_vecOrigin().DistToSqr(g_pLocalPlayer->v_Origin);
         if (dist_sq > best_distance)

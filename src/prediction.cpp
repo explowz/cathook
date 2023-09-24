@@ -311,7 +311,7 @@ void Prediction_PaintTraverse()
 
         for (const auto &ent : entity_cache::player_cache)
         {
-            if (CE_BAD(ent) || !ent->m_bAlivePlayer())
+            if (RAW_ENT(ent)->IsDormant())
                 continue;
 
             Vector velocity;
@@ -710,16 +710,20 @@ static InitRoutine init(
             {
                 // Don't run if we don't use it
                 if (!*hacks::aimbot::engine_projpred && !*debug_pp_draw)
+                {
                     return;
+                }
+
                 for (const auto &ent : entity_cache::player_cache)
                 {
                     auto &buffer = previous_positions.at(ent->m_IDX - 1);
 
-                    if (CE_BAD(LOCAL_E) || CE_BAD(ent) || !ent->m_bAlivePlayer())
+                    if (CE_BAD(LOCAL_E) || RAW_ENT(ent)->IsDormant())
                     {
                         buffer.clear();
                         continue;
                     }
+
                     Vector vel;
                     velocity::EstimateAbsVelocity(RAW_ENT(ent), vel);
                     if (vel.IsZero())

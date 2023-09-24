@@ -61,7 +61,7 @@ void Paint()
         return;
     for (const auto &ent: entity_cache::player_cache)
     {
-        if (CE_BAD(ent))
+        if (RAW_ENT(ent)->IsDormant())
             continue;
         if (ent->m_Type() != ENTITY_PLAYER || !ent->player_info->friendsID)
             continue;
@@ -103,6 +103,7 @@ void Paint()
             color.r = fminf(1.0f, color.r);
             // If blue/green not empty yet
             if (color.b > 0.0f || color.g > 0.0f)
+            {
                 if (draw::WorldToScreen(draw_at_kd, out_kd))
                 {
                     std::string to_use = format("KD: ", boost::format("%.2f") % KDA, " (", kills, "/", deaths, ")");
@@ -111,7 +112,9 @@ void Paint()
                     // Center the string
                     draw::String(out_kd.x - w / 2, out_kd.y, color, to_use.c_str(), *fonts::center_screen);
                 }
+            }
         }
+
         if (mafia_city)
         {
             // Get Position to draw at
@@ -124,7 +127,7 @@ void Paint()
             // Base Color
             rgba_t color = colors::white;
             // tint LOCAL_E name slightly
-            if (ent->m_IDX == g_IEngine->GetLocalPlayer())
+            if (ent == LOCAL_E)
                 color.b += 0.5f;
             // tint CAT status people's names too
             if (playerlist::AccessData(ent->player_info->friendsID).state == playerlist::k_EState::CAT)
@@ -152,6 +155,7 @@ void Paint()
 
             // Draw as long as blue/green still exist
             if (color.b > 0.0f || color.g > 0.0f)
+            {
                 if (draw::WorldToScreen(draw_at_mafia, out_mafia))
                 {
                     float w, h;
@@ -162,6 +166,7 @@ void Paint()
                     // Center the string
                     draw::String(out_mafia.x - w / 2, out_mafia.y, color, to_display.c_str(), *fonts::center_screen);
                 }
+            }
         }
     }
 }

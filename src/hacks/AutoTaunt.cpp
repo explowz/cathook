@@ -46,7 +46,7 @@ public:
                 {
                     if (!player_tools::shouldTarget(ent))
                         continue;
-                    if (ent->m_vecDormantOrigin() && ent->m_vecDormantOrigin()->DistTo(LOCAL_E->m_vecOrigin()) < *safety)
+                    if (ent->m_vecDormantOrigin() && ent->m_vecDormantOrigin()->DistToSqr(LOCAL_E->m_vecOrigin()) < Sqr(*safety))
                     {
                         nearby = true;
                         break;

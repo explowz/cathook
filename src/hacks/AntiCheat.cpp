@@ -27,8 +27,10 @@ void Accuse(int eid, const std::string &hack, const std::string &details)
     if (GetPlayerInfo(eid, &info))
     {
         CachedEntity *ent = ENTITY(eid);
-        if (accuse_chat)
+        if (*accuse_chat)
+        {
             hack::command_stack().push(format("say \"", info.name, " (", classname(CE_INT(ent, netvar.iClass)), ") suspected ", hack, ": ", details, "\""));
+        }
         else
         {
 #if ENABLE_VISUALS
@@ -40,22 +42,27 @@ void Accuse(int eid, const std::string &hack, const std::string &details)
 
 void SetRage(player_info_t info)
 {
-    if (autorage)
+    if (*autorage)
+    {
         playerlist::ChangeState(info.friendsID, playerlist::k_EState::RAGE);
+    }
 }
 
 static void CreateMove()
 {
-    if (!enable)
+    if (!*enable)
+    {
         return;
+    }
+
     angles::Update();
     ac::aimbot::player_orgs().clear();
     for (const auto &ent : entity_cache::player_cache)
     {
-        if (skip_local && ent == LOCAL_E)
+        if (*skip_local && ent == LOCAL_E)
             continue;
 
-        if (CE_GOOD(ent))
+        if (!RAW_ENT(ent)->IsDormant())
         {
             if (player_tools::shouldTarget(ent) || ent == LOCAL_E)
             {
@@ -86,8 +93,11 @@ class ACListener : public IGameEventListener
 public:
     void FireGameEvent(KeyValues *event) override
     {
-        if (!enable)
+        if (!*enable)
+        {
             return;
+        }
+
         std::string name(event->GetName());
         if (name == "player_activate")
         {
@@ -121,10 +131,10 @@ void Shutdown()
 static InitRoutine EC(
     []()
     {
-        EC::Register(EC::CreateMove, CreateMove, "cm_AntiCheat", EC::average);
-        EC::Register(EC::LevelInit, ResetEverything, "init_AntiCheat", EC::average);
-        EC::Register(EC::LevelShutdown, ResetEverything, "reset_AntiCheat", EC::average);
-        EC::Register(EC::Shutdown, Shutdown, "shutdown_AntiCheat", EC::average);
+        EC::Register(EC::CreateMove, CreateMove, "CM_AntiCheat", EC::average);
+        EC::Register(EC::LevelInit, ResetEverything, "INIT_AntiCheat", EC::average);
+        EC::Register(EC::LevelShutdown, ResetEverything, "RESET_AntiCheat", EC::average);
+        EC::Register(EC::Shutdown, Shutdown, "SHUTDOWN_AntiCheat", EC::average);
         Init();
     });
 } // namespace hacks::anticheat

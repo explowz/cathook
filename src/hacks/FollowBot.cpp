@@ -65,7 +65,12 @@ static CatCommand steam_debug("debug_steamid", "Print steamids",
                               []()
                               {
                                   for (const auto &ent : entity_cache::player_cache)
-                                      logging::Info("%u", ent->player_info->friendsID);
+                                  {
+                                      if (ent->player_info->friendsID)
+                                      {
+                                          logging::Info("%u", ent->player_info->friendsID);
+                                      }
+                                  }
                               });
 
 // Something to store breadcrumbs created by followed players
@@ -427,27 +432,16 @@ static void cm()
             {
                 if (!isValidTarget(entity))
                     continue;
-                if (!follow_target)
-                {
-                    if (CE_INVALID(entity))
-                        continue;
-                }
-                else
-                {
-                    if (CE_BAD(entity))
-                        continue;
-                }
+                if (RAW_ENT(entity)->IsDormant())
+                    continue;
                 if (entity->m_bEnemy())
                     continue;
                 // favor closer entities
-                if (CE_GOOD(entity))
-                {
-                    if (follow_target && ENTITY(follow_target)->m_flDistance() < entity->m_flDistance()) // favor closer entities
-                        continue;
-                    // check if new target has a higher priority than current target
-                    if (ClassPriority(ENTITY(follow_target)) >= ClassPriority(entity))
-                        continue;
-                }
+                if (follow_target && ENTITY(follow_target)->m_flDistance() < entity->m_flDistance()) // favor closer entities
+                    continue;
+                // check if new target has a higher priority than current target
+                if (ClassPriority(ENTITY(follow_target)) >= ClassPriority(entity))
+                    continue;
                 if (startFollow(entity, isNavBotCM))
                 {
                     // ooh, a target

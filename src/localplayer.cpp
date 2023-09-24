@@ -182,7 +182,7 @@ void LocalPlayer::Update()
         for (const auto &ent: entity_cache::player_cache)
         {
             player_info_s info{};
-            if (CE_GOOD(ent) && ent != LOCAL_E && ent->m_Type() == ENTITY_PLAYER && HandleToIDX(CE_INT(ent, netvar.hObserverTarget)) == LOCAL_E->m_IDX && GetPlayerInfo(ent->m_IDX, &info))
+            if (!RAW_ENT(ent)->IsDormant() && ent != LOCAL_E && HandleToIDX(CE_INT(ent, netvar.hObserverTarget)) == LOCAL_E->m_IDX && GetPlayerInfo(ent->m_IDX, &info))
             {
                 switch (CE_INT(ent, netvar.iObserverMode))
                 {

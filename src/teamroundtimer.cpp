@@ -26,7 +26,7 @@ void CTeamRoundTimer::Update()
     for (const auto &ent : entity_cache::valid_ents)
     {
         auto result_ent = RAW_ENT(ent);
-        if (ent && result_ent->GetClientClass()->m_ClassID == CL_CLASS(CTeamRoundTimer))
+        if (result_ent->GetClientClass()->m_ClassID == CL_CLASS(CTeamRoundTimer))
         {
             entity = ent->m_IDX;
             return;

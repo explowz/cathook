@@ -63,7 +63,7 @@ inline std::optional<rgba_t> getColor(CachedEntity *ent)
     {
         if (!ent->m_vecDormantOrigin())
             return std::nullopt;
-        if (!ent->m_bEnemy() && !teammates)
+        if (!*teammates && !ent->m_bEnemy())
             return std::nullopt;
         float dist = ent->m_vecDormantOrigin()->DistTo(LOCAL_E->m_vecOrigin());
         if (*max_dist && dist > *max_dist)
@@ -72,7 +72,7 @@ inline std::optional<rgba_t> getColor(CachedEntity *ent)
             return std::nullopt;
         if (*coloring_mode == 0)
         {
-            float hf = float(std::min(dist, *green_dist)) / float(*green_dist);
+            float hf = std::min(dist, *green_dist) / *green_dist;
             rgba_t color(0.0f, 2.0f * hf, 2.0f * (1.0f - hf));
             color.g = std::min(1.0f, color.g);
             color.b = std::min(1.0f, color.b);
@@ -89,7 +89,7 @@ inline std::optional<rgba_t> getColor(CachedEntity *ent)
         {
             if (!ent->m_vecDormantOrigin())
                 return std::nullopt;
-            if (!ent->m_bEnemy() && !teammates)
+            if (!*teammates && !ent->m_bEnemy())
                 return std::nullopt;
             float dist = ent->m_vecDormantOrigin()->DistTo(LOCAL_E->m_vecOrigin());
             if (*max_dist && dist > *max_dist)
@@ -118,7 +118,7 @@ inline std::optional<rgba_t> getColor(CachedEntity *ent)
 
 void draw()
 {
-    if (!enabled || CE_BAD(LOCAL_E) || !g_pLocalPlayer->alive)
+    if (!*enabled || CE_BAD(LOCAL_E) || !g_pLocalPlayer->alive)
         return;
     // Loop all players
     if (*buildings)
@@ -133,7 +133,7 @@ void draw()
             {
                 if (curr_idx > g_GlobalVars->maxClients || !g_pPlayerResource->isAlive(curr_idx))
                     continue;
-                if (g_pPlayerResource->GetTeam(curr_idx) == g_pLocalPlayer->team && !teammates)
+                if (!*teammates && g_pPlayerResource->GetTeam(curr_idx) == g_pLocalPlayer->team)
                     continue;
                 auto vec = soundcache::GetSoundLocation(curr_idx);
                 if (!vec)
@@ -150,9 +150,8 @@ void draw()
                 if (curr_idx <= g_GlobalVars->maxClients && !g_pPlayerResource->isAlive(curr_idx))
                     continue;
                 origin = *ent->m_vecDormantOrigin();
-                if (*buildings)
-                    if (ent->m_Type() != ENTITY_PLAYER && ent->m_Type() != ENTITY_BUILDING)
-                        continue;
+                if (ent->m_Type() != ENTITY_PLAYER && ent->m_Type() != ENTITY_BUILDING)
+                    continue;
                 if (ent == LOCAL_E)
                     continue;
                 color = getColor(ent);
@@ -160,7 +159,8 @@ void draw()
                     continue;
                 if (RAW_ENT(ent)->IsDormant())
                     color = colors::FromRGBA8(160, 160, 160, *opaque);
-                color->a = *opaque;
+                else
+                    color->a = *opaque;
             }
 
             Vector out;
@@ -181,45 +181,23 @@ void draw()
     {
         for (const auto &ent : entity_cache::player_cache)
         {
-            Vector origin;
-            std::optional<rgba_t> color = std::nullopt;
+            std::optional<Vector> vecEntityOrigin = ent->m_vecDormantOrigin();
+            std::optional<rgba_t> color;
 
-            if (CE_INVALID(ent))
-            {
-                if (ent->m_IDX > g_GlobalVars->maxClients || !g_pPlayerResource->isAlive(ent->m_IDX))
-                    continue;
-                if (g_pPlayerResource->GetTeam(ent->m_IDX) == g_pLocalPlayer->team && !teammates)
-                    continue;
-                auto vec = soundcache::GetSoundLocation(ent->m_IDX);
-                if (!vec)
-                    continue;
-                if (*max_dist && vec->DistTo(g_pLocalPlayer->v_Origin) > *max_dist)
-                    continue;
-                origin = *vec;
-                color  = colors::FromRGBA8(160, 160, 160, *opaque);
-            }
+            if (!vecEntityOrigin)
+                continue;
+            if (ent == LOCAL_E)
+                continue;
+            color = getColor(ent);
+            if (!color)
+                continue;
+            if (RAW_ENT(ent)->IsDormant())
+                color = colors::FromRGBA8(160, 160, 160, *opaque);
             else
-            {
-                if ((!RAW_ENT(ent)->IsDormant() && !ent->m_bAlivePlayer()) || !ent->m_vecDormantOrigin())
-                    continue;
-                if (ent->m_IDX <= g_GlobalVars->maxClients && !g_pPlayerResource->isAlive(ent->m_IDX))
-                    continue;
-                origin = *ent->m_vecDormantOrigin();
-                if (*buildings)
-                    if (ent->m_Type() != ENTITY_PLAYER && ent->m_Type() != ENTITY_BUILDING)
-                        continue;
-                if (ent == LOCAL_E)
-                    continue;
-                color = getColor(ent);
-                if (!color)
-                    continue;
-                if (RAW_ENT(ent)->IsDormant())
-                    color = colors::FromRGBA8(160, 160, 160, *opaque);
                 color->a = *opaque;
-            }
 
             Vector out;
-            if (!draw::WorldToScreen(origin, out))
+            if (!draw::WorldToScreen(*vecEntityOrigin, out))
             {
                 // We need to flip on both x and y-axis in case m_vecOrigin it's not actually on screen
                 out.x = draw::width - out.x;

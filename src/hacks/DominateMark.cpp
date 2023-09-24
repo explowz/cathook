@@ -28,7 +28,7 @@ static InitRoutine init(
                 re::CTFPlayerShared *shared_player = &re::C_BasePlayer::shared_(RAW_ENT(LOCAL_E));
                 for (const auto &ent: entity_cache::player_cache)
                 {
-                    if (CE_VALID(ent) && ent->m_bAlivePlayer() && re::CTFPlayerShared::IsDominatingPlayer(shared_player, ent->m_IDX))
+                    if (re::CTFPlayerShared::IsDominatingPlayer(shared_player, ent->m_IDX))
                     {
                         float size;
                         if (!ent->hitboxes.GetHitbox(0))

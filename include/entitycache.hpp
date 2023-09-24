@@ -62,7 +62,6 @@ struct mstudiobbox_t;
 class CachedEntity
 {
 public:
-    typedef CachedEntity ThisClass;
     CachedEntity();
     explicit CachedEntity(int idx);
     ~CachedEntity();

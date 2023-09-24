@@ -75,39 +75,49 @@ static InitRoutine misc_init(
                 if (after)
                 {
                     patch->Patch();
-                    if (no_zoom)
+                    if (*no_zoom)
+                    {
                         patch2->Patch();
+                    }
                 }
                 else
                 {
                     patch->Shutdown();
                     if (patch2)
+                    {
                         patch2->Shutdown();
+                    }
                 }
             });
+
         no_zoom.installChangeCallback(
             [](settings::VariableBase<bool> &, bool after)
             {
                 // std::optional so the addresses are searched when needed, not on inject
                 if (!patch2)
+                {
                     // Keep rifle visible
                     patch2 = BytePatch(CSignature::GetClientSignature, "74 ? A1 ? ? ? ? 8B 40 ? 85 C0 75 ? C9", 0x0, { 0x70 });
+                }
                 if (after)
                 {
-                    if (no_scope)
+                    if (*no_scope)
+                    {
                         patch2->Patch();
+                    }
                 }
                 else
                 {
                     patch2->Shutdown();
                 }
             });
+
         nolerp.installChangeCallback(
             [](settings::VariableBase<bool> &, bool after)
             {
                 if (!after)
                 {
-                    if (backup_lerp)
+                    if (backup_lerp > 0.0f)
                     {
                         cl_interp->SetValue(backup_lerp);
                         backup_lerp = 0.0f;
@@ -118,16 +128,19 @@ static InitRoutine misc_init(
                     backup_lerp = cl_interp->GetFloat();
                     // We should adjust cl_interp to be as low as possible
                     if (cl_interp->GetFloat() > 0.152f)
+                    {
                         cl_interp->SetValue(0.152f);
+                    }
                 }
             });
+
         EC::Register(
             EC::Shutdown,
             []()
             {
                 cl_warp_sendmovedetour.Shutdown();
                 cl_nospread_sendmovedetour.Shutdown();
-                if (backup_lerp)
+                if (backup_lerp > 0.0f)
                 {
                     cl_interp->SetValue(backup_lerp);
                     backup_lerp = 0.0f;
@@ -135,7 +148,8 @@ static InitRoutine misc_init(
                 patch.reset();
                 patch2.reset();
             },
-            "misctemp_shutdown");
+            "SHUTDOWN_MiscTemp");
+
 #if ENABLE_TEXTMODE
         // Ensure that we trigger the callback for textmode builds
         nolerp = false;

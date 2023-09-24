@@ -19,7 +19,7 @@ void Update()
         const model_t *model    = RAW_ENT(ent)->GetModel();
         bool issandwich         = false;
         const uint16_t curr_idx = ent->m_IDX;
-        if (model && tickcount % 33 == 0)
+        if (tickcount % 33 == 0)
         {
             std::string model_name(g_IModelInfo->GetModelName(model));
             if (model_name.find("plate") != std::string::npos)

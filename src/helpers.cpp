@@ -729,16 +729,21 @@ CachedEntity *getClosestEntity(Vector vec)
     CachedEntity *best_ent = nullptr;
     for (const auto &ent : entity_cache::player_cache)
     {
-        if (!ent->m_vecDormantOrigin() || !ent->m_bAlivePlayer() || !ent->m_bEnemy())
-            continue;
+        auto vecEntityOrigin = ent->m_vecDormantOrigin();
 
-        const auto dist_sq = vec.DistToSqr(*ent->m_vecDormantOrigin());
+        if (!vecEntityOrigin || !ent->m_bEnemy())
+        {
+            continue;
+        }
+
+        const auto dist_sq = vec.DistToSqr(*vecEntityOrigin);
         if (dist_sq < distance)
         {
             distance = dist_sq;
             best_ent = ent;
         }
     }
+
     return best_ent;
 }
 
@@ -748,16 +753,21 @@ CachedEntity *getClosestNonlocalEntity(Vector vec)
     CachedEntity *best_ent = nullptr;
     for (const auto &ent : entity_cache::player_cache)
     {
-        if (!ent->m_IDX != g_pLocalPlayer->entity_idx || !ent->m_vecDormantOrigin() || !ent->m_bAlivePlayer() || !ent->m_bEnemy())
-            continue;
+        auto vecEntityOrigin = ent->m_vecDormantOrigin();
 
-        const auto dist_sq = vec.DistToSqr(*ent->m_vecDormantOrigin());
+        if (!vecEntityOrigin || !ent->m_bEnemy() || ent == LOCAL_E)
+        {
+            continue;
+        }
+
+        const auto dist_sq = vec.DistToSqr(*vecEntityOrigin);
         if (dist_sq < distance)
         {
             distance = dist_sq;
             best_ent = ent;
         }
     }
+
     return best_ent;
 }
 
@@ -1910,11 +1920,17 @@ int GetPlayerForUserID(int userID)
     {
         player_info_s player_info{};
         if (!GetPlayerInfo(ent->m_IDX, &player_info))
+        {
             continue;
+        }
+
         // Found player
         if (player_info.userID == userID)
+        {
             return ent->m_IDX;
+        }
     }
+
     return 0;
 }
 

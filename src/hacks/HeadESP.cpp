@@ -27,14 +27,14 @@ static void cm()
         return;
     for (const auto &pEntity : entity_cache::player_cache)
     {
-        if (g_pLocalPlayer->entity_idx == pEntity->m_IDX)
+        if (pEntity == LOCAL_E)
             continue;
-        if (CE_BAD(pEntity) || !pEntity->m_bAlivePlayer())
+        if (RAW_ENT(pEntity)->IsDormant())
         {
             drawEsp[pEntity->m_IDX] = false;
             continue;
         }
-        if (pEntity->m_iTeam() == LOCAL_E->m_iTeam() && pEntity->player_info && playerlist::IsDefault(pEntity->player_info->friendsID) && !*teammates)
+        if (!*teammates && pEntity->m_iTeam() == LOCAL_E->m_iTeam() && pEntity->player_info && playerlist::IsDefault(pEntity->player_info->friendsID))
         {
             drawEsp[pEntity->m_IDX] = false;
             continue;
@@ -58,7 +58,7 @@ void draw()
     {
         if (!drawEsp[pEntity->m_IDX])
             continue;
-        if (CE_BAD(pEntity) || !pEntity->m_bAlivePlayer())
+        if (RAW_ENT(pEntity)->IsDormant())
             continue;
         if (pEntity == LOCAL_E)
             continue;

@@ -120,16 +120,18 @@ public:
     char pad3[4];                              // 80   | 4 bytes    | 84
     bool m_bInWaitingForPlayers;               // 84   | 1 byte     | 85
     bool bool_pad0[3];                         // 85   | 3 bytes    | 88
-    char pad4[1037];                           // 88   | 1037 bytes | 1125
+    char pad4[1035];                           // 88   | 1035 bytes | 1123
+    bool m_bPlayingMedieval;                   // 1123 | 1 byte     | 1124
+    char bool_pad1[1];                         // 1124 | 1 byte     | 1125
     bool m_bPlayingSpecialDeliveryMode;        // 1125 | 1 byte     | 1126
     bool m_bPlayingMannVsMachine;              // 1126 | 1 byte     | 1127
-    char bool_pad1[3];                         // 1127 | 3 bytes    | 1130
+    char bool_pad2[3];                         // 1127 | 3 bytes    | 1130
     bool m_bCompetitiveMode;                   // 1130 | 1 byte     | 1131
-    char bool_pad2[3];                         // 1131 | 3 bytes    | 1134
+    char bool_pad3[3];                         // 1131 | 3 bytes    | 1134
     char pad5[8];                              // 1134 | 8 bytes    | 1142
     bool m_bIsUsingSpells;                     // 1142 | 1 byte     | 1143
     bool m_bTruceActive;                       // 1143 | 1 byte     | 1144
-    char bool_pad3[2];                         // 1144 | 2 bytes    | 1146
+    char bool_pad4[2];                         // 1144 | 2 bytes    | 1146
     char pad6[10];                             // 1146 | 10 bytes   | 1156
     int m_nMapHolidayType;                     // 1156 | 4 bytes    | 1160
     char pad7[1048];                           // 1160 | 1048 bytes | 2208
@@ -178,8 +180,7 @@ public:
 
     bool IsUsingSpells() const
     {
-        auto tf_spells_enabled = g_ICvar->FindVar("tf_spells_enabled");
-        if (tf_spells_enabled->GetBool())
+        if (g_ICvar->FindVar("tf_spells_enabled")->GetBool())
             return true;
 
         // Hightower
@@ -197,6 +198,11 @@ public:
     bool IsPlayingSpecialDeliveryMode() const
     {
         return m_bPlayingSpecialDeliveryMode;
+    }
+
+    bool IsInMedievalMode() const
+    {
+        return m_bPlayingMedieval;
     }
 
     bool IsHolidayMap(int nHoliday) const

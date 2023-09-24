@@ -63,7 +63,12 @@ static settings::Boolean auto_spin_up{ "aimbot.auto.spin-up", "false" };
 static settings::Boolean minigun_tapfire{ "aimbot.auto.tapfire", "false" };
 static settings::Boolean auto_zoom{ "aimbot.auto.zoom", "false" };
 static settings::Boolean auto_unzoom{ "aimbot.auto.unzoom", "false" };
+
+#if ENABLE_TEXTMODE
 static settings::Float zoom_distance{ "aimbot.zoom.distance", "1250.0" };
+#else
+static settings::Float zoom_distance{ "aimbot.zoom.distance", "0.0" };
+#endif
 
 static settings::Boolean backtrack_aimbot{ "aimbot.backtrack", "false" };
 static settings::Boolean backtrack_last_tick_only("aimbot.backtrack.only-last-tick", "true");
@@ -776,25 +781,26 @@ CachedEntity *RetrieveBestTarget(bool aimkey_state)
     // Competitive maps do not have any hazards
     if (*target_hazards && GetWeaponMode() != weapon_melee && !TFGameRules()->m_bCompetitiveMode)
     {
-        for (const auto &hazard_entity : entity_cache::valid_ents)
+        for (const auto &pEntity : entity_cache::valid_ents)
         {
-            const model_t *model = RAW_ENT(hazard_entity)->GetModel();
-            if (model)
+            const model_t *pModel = RAW_ENT(pEntity)->GetModel();
+            const char *pszName = g_IModelInfo->GetModelName(pModel);
+            if (Hash::IsHazard(pszName))
             {
-                const auto szName = g_IModelInfo->GetModelName(model);
-                if (Hash::IsHazard(szName))
+                // TODO: Test if hazards hurt NPCs
+                for (const auto &pPlayer : entity_cache::player_cache)
                 {
-                    for (const auto &ent : entity_cache::valid_ents)
+                    const Vector vecHazardOrigin = pEntity->m_vecOrigin();
+                    const Vector vecEntityOrigin = pPlayer->m_vecOrigin();
+                    if (IsTargetStateGood(pPlayer) && IsVectorVisible(vecHazardOrigin, vecEntityOrigin, true))
                     {
-                        const auto hazard_origin = hazard_entity->m_vecOrigin();
-                        if (IsTargetStateGood(ent) && IsVectorVisible(hazard_origin, ent->m_vecOrigin(), true))
+                        const float flDistHazardToTarget       = vecHazardOrigin.DistTo(vecEntityOrigin);
+                        const float flDistHazardToLocalPlayer  = pEntity->m_flDistance();
+                        const float flDamageToTarget           = 150.0f - 0.25f * flDistHazardToTarget;
+                        // Hazards cannot deal less than 75 damage
+                        if (flDamageToTarget >= 75.0f && flDistHazardToLocalPlayer > 350.0f && Aim(pEntity))
                         {
-                            const float dist_hazard_to_enemy        = hazard_origin.DistTo(ent->m_vecOrigin());
-                            const float dist_hazard_to_local_player = hazard_entity->m_flDistance();
-                            const float damage_to_enemy             = 150.0f - 0.25f * dist_hazard_to_enemy;
-                            // Hazards cannot deal less than 75 damage
-                            if (damage_to_enemy >= 75.0f && dist_hazard_to_local_player > 350.0f && Aim(hazard_entity))
-                                return hazard_entity;
+                            return pEntity;
                         }
                     }
                 }
@@ -808,6 +814,11 @@ CachedEntity *RetrieveBestTarget(bool aimkey_state)
     std::optional<hacks::backtrack::BacktrackData> bt_tick = std::nullopt;
     for (const auto &ent : entity_cache::valid_ents)
     {
+        if (RAW_ENT(ent)->IsDormant())
+        {
+            continue;
+        }
+
         // Check whether the current ent is good enough to target
         bool good_target = false;
 
@@ -1560,9 +1571,13 @@ static void DrawText()
             }
         }
     }
+
     // Debug stuff
     if (!*aimbot_debug)
+    {
         return;
+    }
+
     for (const auto &ent : entity_cache::player_cache)
     {
         Vector screen;

@@ -894,7 +894,7 @@ void warpLogic()
 
                 for (const auto &ent : entity_cache::player_cache)
                 {
-                    if (CE_BAD(ent) || !ent->m_bAlivePlayer() || !ent->m_bEnemy() || !player_tools::shouldTarget(ent))
+                    if (RAW_ENT(ent)->IsDormant() || !ent->m_bEnemy() || !player_tools::shouldTarget(ent))
                         continue;
                     // No hitboxes
                     if (!ent->hitboxes.GetHitbox(2))
