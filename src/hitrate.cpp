@@ -98,20 +98,26 @@ void Update()
     // Hitscan only
     if (CE_GOOD(weapon) && GetWeaponMode() == weapon_hitscan)
     {
-
         int ammo = CE_INT(LOCAL_E, netvar.m_iAmmo + 4);
         if (ammo < lastammo && !aimbot_shot.check(500) && !aimbot_target_idx)
+        {
             OnShot();
+        }
+
         lastammo = ammo;
         // Resolver
         if (LOCAL_W->m_iClassID() == CL_CLASS(CTFSniperRifle) || LOCAL_W->m_iClassID() == CL_CLASS(CTFSniperRifleDecap))
         {
             auto ch = (INetChannel *) g_IEngine->GetNetChannelInfo();
             if (ch)
+            {
                 for (int i = 1; i < PLAYER_ARRAY_SIZE; i++)
                 {
                     if (!resolve_soon[i])
+                    {
                         continue;
+                    }
+
                     // Get general latency and add a safety net
                     unsigned int delay = (ch->GetLatency(FLOW_OUTGOING) + ch->GetLatency(FLOW_INCOMING)) * 1000.0f + 100.0f;
                     if (resolve_timer[i].check(delay))
@@ -120,6 +126,7 @@ void Update()
                         hacks::anti_anti_aim::increaseBruteNum(i);
                     }
                 }
+            }
         }
     }
 }
@@ -129,14 +136,16 @@ class HurtListener : public IGameEventListener
 public:
     void FireGameEvent(KeyValues *event) override
     {
-        if (strcmp("player_hurt", event->GetName()) != 0)
-            return;
         if (GetPlayerForUserID(event->GetInt("attacker")) == g_IEngine->GetLocalPlayer())
         {
             if (CE_GOOD(LOCAL_W) && (LOCAL_W->m_iClassID() == CL_CLASS(CTFSniperRifle) || LOCAL_W->m_iClassID() == CL_CLASS(CTFSniperRifleDecap)))
+            {
                 OnHit(event->GetBool("crit"), event->GetInt("userid"), true);
+            }
             else if (CE_GOOD(LOCAL_W) && GetWeaponMode() == weapon_hitscan)
+            {
                 OnHit(false, event->GetInt("userid"), false);
+            }
         }
     }
 };
@@ -150,8 +159,8 @@ HurtListener &listener()
 InitRoutine init(
     []()
     {
-        g_IGameEventManager->AddListener(&listener(), false);
+        g_IGameEventManager->AddListener(&listener(), "player_hurt", false);
         EC::Register(
-            EC::Shutdown, []() { g_IGameEventManager->RemoveListener(&listener()); }, "shutdown_hitrate");
+            EC::Shutdown, []() { g_IGameEventManager->RemoveListener(&listener()); }, "SHUTDOWN_Hitrate");
     });
 } // namespace hitrate
