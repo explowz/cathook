@@ -96,6 +96,13 @@ case "$DISTRO" in
   }
   OS="debian"
   ;;
+"kali")
+  [ "$(type apt-get)" ] || {
+    printf "/etc/os-release outputs 'ID=kali' but APT is not present, exiting..."
+    exit
+  }
+  OS="kali"
+  ;;
   # package names are the same. Also, kitware's Ubuntu CMake works just fine on Debian
 "fedora")
   [ "$(type dnf)" ] || {
@@ -147,6 +154,25 @@ case "$OS" in
   fi
   ;;
 "debian")
+  dpkg -s "${debian_packages[@]}" >/dev/null 2>&1
+  out=$?
+  if [ "$out" = 0 ]; then
+    dpkg --compare-versions "$(dpkg-query --show --showformat '${Version}' cmake)" ge 3.12
+    out=$?
+  fi
+  if [ "$out" = 1 ]; then
+    requestPermissions "${debian_packages[@]}"
+    pkgs="${debian_packages[*]}"
+    $SUDO bash -c "apt-get update;dpkg --add-architecture i386;apt-get update;apt-get install -y $pkgs"
+    # Check if cmake is up-to-date enough
+    dpkg --compare-versions "$(dpkg-query --show --showformat '${Version}' cmake)" ge 3.12
+    out=$?
+    if [ "$out" = 1 ]; then
+      $SUDO bash -c "apt-get install -y cmake"
+    fi
+  fi
+  ;;
+"kali")
   dpkg -s "${debian_packages[@]}" >/dev/null 2>&1
   out=$?
   if [ "$out" = 0 ]; then
