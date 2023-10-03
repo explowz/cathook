@@ -281,7 +281,6 @@ void update_mapname()
     strncpy(data.ingame.mapname, GetLevelName().c_str(), sizeof(data.ingame.mapname));
 }
 
-float framerate = 0.0f;
 void UpdateTemporaryData()
 {
     user_data_s &data = peer->memory->peer_user_data[peer->client_id];
@@ -294,7 +293,8 @@ void UpdateTemporaryData()
 
     if (data.connected)
     {
-        IClientEntity *player = g_IEntityList->GetClientEntity(g_IEngine->GetLocalPlayer());
+        int localplayer = g_IEngine->GetLocalPlayer();
+        IClientEntity *player = g_IEntityList->GetClientEntity(localplayer);
         if (player)
         {
             data.ingame.good = true;
@@ -302,12 +302,12 @@ void UpdateTemporaryData()
 
             int score_saved = data.ingame.score;
 
-            data.ingame.score      = g_pPlayerResource->GetScore(g_IEngine->GetLocalPlayer());
-            data.ingame.team       = g_pPlayerResource->GetTeam(g_IEngine->GetLocalPlayer());
-            data.ingame.role       = g_pPlayerResource->GetClass(LOCAL_E);
+            data.ingame.score      = g_pPlayerResource->GetScore(localplayer);
+            data.ingame.team       = g_pPlayerResource->GetTeam(localplayer);
+            data.ingame.role       = g_pPlayerResource->GetClass(localplayer);
             data.ingame.life_state = NET_BYTE(player, netvar.iLifeState);
-            data.ingame.health     = NET_INT(player, netvar.iHealth);
-            data.ingame.health_max = LOCAL_E->m_iMaxHealth();
+            data.ingame.health     = g_pPlayerResource->GetHealth(LOCAL_E);
+            data.ingame.health_max = g_pPlayerResource->GetMaxHealth(LOCAL_E);
 
             if (score_saved > data.ingame.score)
                 score_saved = 0;

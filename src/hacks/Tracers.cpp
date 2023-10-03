@@ -131,7 +131,7 @@ void draw()
             std::optional<rgba_t> color;
             if (CE_INVALID(ent))
             {
-                if (curr_idx > g_GlobalVars->maxClients || !g_pPlayerResource->isAlive(curr_idx))
+                if (curr_idx > g_GlobalVars->maxClients || !g_pPlayerResource->IsAlive(curr_idx))
                     continue;
                 if (!*teammates && g_pPlayerResource->GetTeam(curr_idx) == g_pLocalPlayer->team)
                     continue;
@@ -147,7 +147,7 @@ void draw()
             {
                 if ((!RAW_ENT(ent)->IsDormant() && !ent->m_bAlivePlayer()) || !ent->m_vecDormantOrigin())
                     continue;
-                if (curr_idx <= g_GlobalVars->maxClients && !g_pPlayerResource->isAlive(curr_idx))
+                if (curr_idx <= g_GlobalVars->maxClients && !g_pPlayerResource->IsAlive(curr_idx))
                     continue;
                 origin = *ent->m_vecDormantOrigin();
                 if (ent->m_Type() != ENTITY_PLAYER && ent->m_Type() != ENTITY_BUILDING)

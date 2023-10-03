@@ -23,9 +23,9 @@ static zerokernel::special::PlayerListData createPlayerListData(int userid)
     auto idx = GetPlayerForUserID(userid);
     player_info_s info{};
     GetPlayerInfo(idx, &info);
-    data.classId = g_pPlayerResource->getClass(idx);
-    data.teamId  = g_pPlayerResource->getTeam(idx) - 1;
-    data.dead    = !g_pPlayerResource->isAlive(idx);
+    data.classId = g_pPlayerResource->GetClass(idx);
+    data.teamId  = g_pPlayerResource->GetTeam(idx) - 1;
+    data.dead    = !g_pPlayerResource->IsAlive(idx);
     data.steam   = info.friendsID;
     data.state   = playerlist::k_pszNames[static_cast<int>(playerlist::AccessData(info.friendsID).state)];
     data.name    = info.name;
@@ -77,7 +77,7 @@ void sortPList()
         if (GetPlayerInfo(i, &info))
         {
             auto idx = GetPlayerForUserID(info.userID);
-            if (g_pPlayerResource->getTeam(idx) == 2)
+            if (g_pPlayerResource->GetTeam(idx) == 2)
             {
                 controller->addPlayer(info.userID, createPlayerListData(info.userID));
             }
@@ -89,7 +89,7 @@ void sortPList()
         if (GetPlayerInfo(i, &info))
         {
             auto idx = GetPlayerForUserID(info.userID);
-            if (g_pPlayerResource->getTeam(idx) == 3)
+            if (g_pPlayerResource->GetTeam(idx) == 3)
             {
                 controller->addPlayer(info.userID, createPlayerListData(info.userID));
             }
@@ -101,7 +101,7 @@ void sortPList()
         if (GetPlayerInfo(i, &info))
         {
             auto idx = GetPlayerForUserID(info.userID);
-            if (g_pPlayerResource->getTeam(idx) != 2 && g_pPlayerResource->getTeam(idx) != 3)
+            if (g_pPlayerResource->GetTeam(idx) != 2 && g_pPlayerResource->GetTeam(idx) != 3)
             {
                 controller->addPlayer(info.userID, createPlayerListData(info.userID));
             }

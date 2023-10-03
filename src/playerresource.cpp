@@ -23,7 +23,7 @@ void TFPlayerResource::Update()
     }
 }
 
-int TFPlayerResource::GetHealth(CachedEntity *player)
+int TFPlayerResource::GetHealth(CachedEntity *player) const
 {
     IClientEntity *ent;
     int idx;
@@ -36,7 +36,7 @@ int TFPlayerResource::GetHealth(CachedEntity *player)
     return *(int *) ((unsigned) ent + netvar.m_iHealth_Resource + 4 * idx);
 }
 
-int TFPlayerResource::GetMaxHealth(CachedEntity *player)
+int TFPlayerResource::GetMaxHealth(CachedEntity *player) const
 {
     IClientEntity *ent;
     int idx;
@@ -49,7 +49,7 @@ int TFPlayerResource::GetMaxHealth(CachedEntity *player)
     return *(int *) ((unsigned) ent + netvar.res_iMaxHealth + 4 * idx);
 }
 
-int TFPlayerResource::GetMaxBuffedHealth(CachedEntity *player)
+int TFPlayerResource::GetMaxBuffedHealth(CachedEntity *player) const
 {
     IClientEntity *ent;
     int idx;
@@ -63,7 +63,7 @@ int TFPlayerResource::GetMaxBuffedHealth(CachedEntity *player)
     return *(int *) ((unsigned) ent + netvar.res_iMaxBuffedHealth + 4 * idx);
 }
 
-int TFPlayerResource::GetTeam(int idx)
+int TFPlayerResource::GetTeam(int idx) const
 {
     IClientEntity *ent;
 
@@ -75,7 +75,7 @@ int TFPlayerResource::GetTeam(int idx)
     return *(int *) ((unsigned) ent + netvar.res_iTeam + 4 * idx);
 }
 
-int TFPlayerResource::GetScore(int idx)
+int TFPlayerResource::GetScore(int idx) const
 {
     IClientEntity *ent;
 
@@ -87,7 +87,7 @@ int TFPlayerResource::GetScore(int idx)
     return *(int *) ((unsigned) ent + netvar.m_iTotalScore_Resource + 4 * idx);
 }
 
-int TFPlayerResource::GetKills(int idx)
+int TFPlayerResource::GetKills(int idx) const
 {
     IClientEntity *ent;
 
@@ -99,7 +99,7 @@ int TFPlayerResource::GetKills(int idx)
     return *(int *) ((unsigned) ent + netvar.m_iKills_Resource + 4 * idx);
 }
 
-int TFPlayerResource::GetDeaths(int idx)
+int TFPlayerResource::GetDeaths(int idx) const
 {
     IClientEntity *ent;
 
@@ -111,7 +111,7 @@ int TFPlayerResource::GetDeaths(int idx)
     return *(int *) ((unsigned) ent + netvar.m_iDeaths_Resource + 4 * idx);
 }
 
-int TFPlayerResource::GetLevel(int idx)
+int TFPlayerResource::GetLevel(int idx) const
 {
     IClientEntity *ent;
 
@@ -123,7 +123,7 @@ int TFPlayerResource::GetLevel(int idx)
     return *(int *) ((unsigned) ent + netvar.m_iPlayerLevel_Resource + 4 * idx);
 }
 
-int TFPlayerResource::GetDamage(int idx)
+int TFPlayerResource::GetDamage(int idx) const
 {
     IClientEntity *ent;
 
@@ -135,7 +135,7 @@ int TFPlayerResource::GetDamage(int idx)
     return *(int *) ((unsigned) ent + netvar.m_iDamage_Resource + 4 * idx);
 }
 
-unsigned TFPlayerResource::GetAccountID(int idx)
+unsigned int TFPlayerResource::GetAccountID(int idx) const
 {
     IClientEntity *ent;
 
@@ -147,7 +147,7 @@ unsigned TFPlayerResource::GetAccountID(int idx)
     return *(unsigned *) ((unsigned) ent + netvar.m_iAccountID_Resource + 4 * idx);
 }
 
-int TFPlayerResource::GetPing(int idx)
+int TFPlayerResource::GetPing(int idx) const
 {
     IClientEntity *ent;
 
@@ -159,7 +159,7 @@ int TFPlayerResource::GetPing(int idx)
     return *(int *) ((unsigned) ent + netvar.m_iPing_Resource + 4 * idx);
 }
 
-int TFPlayerResource::GetClass(CachedEntity *player)
+int TFPlayerResource::GetClass(CachedEntity *player) const
 {
     IClientEntity *ent;
     int idx;
@@ -173,7 +173,7 @@ int TFPlayerResource::GetClass(CachedEntity *player)
     return *(int *) ((unsigned) ent + netvar.res_iPlayerClass + 4 * idx);
 }
 
-bool TFPlayerResource::isAlive(int idx)
+bool TFPlayerResource::IsAlive(int idx) const
 {
     IClientEntity *ent = g_IEntityList->GetClientEntity(entity);
     if (!ent || ent->GetClientClass()->m_ClassID != RCC_PLAYERRESOURCE)
@@ -183,7 +183,7 @@ bool TFPlayerResource::isAlive(int idx)
     return *(bool *) ((unsigned) ent + netvar.res_bAlive + idx);
 }
 
-bool TFPlayerResource::isValid(int idx)
+bool TFPlayerResource::IsValid(int idx) const
 {
     IClientEntity *ent = g_IEntityList->GetClientEntity(entity);
     if (!ent || ent->GetClientClass()->m_ClassID != RCC_PLAYERRESOURCE)
@@ -193,7 +193,7 @@ bool TFPlayerResource::isValid(int idx)
     return *(bool *) ((unsigned) ent + netvar.res_bValid + idx);
 }
 
-int TFPlayerResource::getClass(int idx)
+int TFPlayerResource::GetClass(int idx) const
 {
     IClientEntity *ent = g_IEntityList->GetClientEntity(entity);
     if (!ent || ent->GetClientClass()->m_ClassID != RCC_PLAYERRESOURCE)
@@ -201,16 +201,6 @@ int TFPlayerResource::getClass(int idx)
     if (idx >= g_GlobalVars->maxClients || idx < 0)
         return 0;
     return *(int *) ((unsigned) ent + netvar.res_iPlayerClass + 4 * idx);
-}
-
-int TFPlayerResource::getTeam(int idx)
-{
-    IClientEntity *ent = g_IEntityList->GetClientEntity(entity);
-    if (!ent || ent->GetClientClass()->m_ClassID != RCC_PLAYERRESOURCE)
-        return 0;
-    if (idx >= g_GlobalVars->maxClients || idx < 0)
-        return 0;
-    return *(int *) ((unsigned) ent + netvar.res_iTeam + 4 * idx);
 }
 
 TFPlayerResource *g_pPlayerResource{ nullptr };

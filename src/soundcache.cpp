@@ -16,7 +16,7 @@ static void CreateMove()
         cache_sound(i.m_pOrigin, i.m_nSoundSource);
 
     for (const auto &[key,val]: sound_cache)
-        if (val.last_update.check(EXPIRETIME) || (key <= g_GlobalVars->maxClients && !g_pPlayerResource->isAlive(key)))
+        if (val.last_update.check(EXPIRETIME) || (key <= g_GlobalVars->maxClients && !g_pPlayerResource->IsAlive(key)))
             sound_cache.erase(key);
 }
 

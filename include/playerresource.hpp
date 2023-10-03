@@ -13,23 +13,22 @@ class TFPlayerResource
 {
 public:
     void Update();
-    int GetMaxHealth(CachedEntity *player);
-    int GetHealth(CachedEntity *player);
-    int GetMaxBuffedHealth(CachedEntity *player);
-    int GetClass(CachedEntity *player);
-    int GetTeam(int idx);
-    int GetScore(int idx);
-    int GetKills(int idx);
-    int GetDeaths(int idx);
-    int GetLevel(int idx);
-    int GetDamage(int idx);
-    unsigned GetAccountID(int idx);
+    int GetMaxHealth(CachedEntity *player) const;
+    int GetHealth(CachedEntity *player) const;
+    int GetMaxBuffedHealth(CachedEntity *player) const;
+    int GetClass(CachedEntity *player) const;
 
-    int GetPing(int idx);
-    int getClass(int idx);
-    int getTeam(int idx);
-    bool isAlive(int idx);
-    bool isValid(int idx);
+    int GetTeam(int idx) const;
+    int GetScore(int idx) const;
+    int GetKills(int idx) const;
+    int GetDeaths(int idx) const;
+    int GetLevel(int idx) const;
+    int GetDamage(int idx) const;
+    unsigned int GetAccountID(int idx) const;
+    int GetPing(int idx) const;
+    int GetClass(int idx) const;
+    bool IsAlive(int idx) const;
+    bool IsValid(int idx) const;
 
     int entity;
 };

@@ -278,7 +278,7 @@ static bool isValidTarget(CachedEntity *entity)
     if (entity == LOCAL_E)
         return false;
     // Don't follow dead players
-    if (!g_pPlayerResource->isAlive(entity->m_IDX))
+    if (!g_pPlayerResource->IsAlive(entity->m_IDX))
         return false;
     if (IsPlayerDisguised(entity) || IsPlayerInvisible(entity))
         return false;
@@ -503,7 +503,7 @@ static void cm()
             if (CE_VALID(ent))
             {
                 auto pos = ent->m_vecDormantOrigin();
-                if (!g_pPlayerResource->isAlive(ent->m_IDX))
+                if (!g_pPlayerResource->IsAlive(ent->m_IDX))
                     follow_target = 0;
                 if (pos && navtimer.test_and_set(800))
                 {

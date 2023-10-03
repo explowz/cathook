@@ -700,7 +700,7 @@ bool stayNearTarget(CachedEntity *ent)
 // A bunch of basic checks to ensure we don't try to target an invalid entity
 bool isStayNearTargetValid(CachedEntity *ent)
 {
-    return CE_VALID(ent) && g_pPlayerResource->isAlive(ent->m_IDX) && ent->m_IDX != g_pLocalPlayer->entity_idx && g_pLocalPlayer->team != ent->m_iTeam() && player_tools::shouldTarget(ent) && !IsPlayerInvulnerable(ent);
+    return CE_VALID(ent) && g_pPlayerResource->IsAlive(ent->m_IDX) && ent->m_IDX != g_pLocalPlayer->entity_idx && g_pLocalPlayer->team != ent->m_iTeam() && player_tools::shouldTarget(ent) && !IsPlayerInvulnerable(ent);
 }
 
 // Recursive function to find hiding spot

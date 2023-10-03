@@ -92,8 +92,15 @@ void Update()
     }
 
     // pre-allocate memory
-    valid_ents.reserve(max);
-    player_cache.reserve(g_GlobalVars->maxClients);
+    if (max > valid_ents.capacity())
+    {
+        valid_ents.reserve(max);
+    }
+
+    if (g_GlobalVars->maxClients > player_cache.capacity())
+    {
+        player_cache.reserve(g_GlobalVars->maxClients);
+    }
 
     if (previous_max == max && previous_ent == current_ents)
     {

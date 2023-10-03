@@ -877,21 +877,14 @@ void update()
         ipc_list.clear();
         int count_total = 0;
 
-        for (const auto &ent : entity_cache::player_cache)
+        for (const auto &ent : entity_cache::valid_ents)
         {
-            if (ent == LOCAL_E)
+            if (ent->m_Type() != ENTITY_PLAYER || ent == LOCAL_E)
             {
                 continue;
             }
 
-            if (g_IEntityList->GetClientEntity(ent->m_IDX))
-            {
-                ++count_total;
-            }
-            else
-            {
-                continue;
-            }
+            ++count_total;
 
             player_info_s info{};
             if (!GetPlayerInfo(ent->m_IDX, &info))
