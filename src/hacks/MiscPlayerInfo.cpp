@@ -66,7 +66,7 @@ void Paint()
         if (ent->m_Type() != ENTITY_PLAYER || !ent->player_info->friendsID)
             continue;
         // Update alive state
-        if (g_pPlayerResource->isAlive(ent->m_IDX))
+        if (g_pPlayerResource->IsAlive(ent->m_IDX))
             death_timer[ent->m_IDX] = g_GlobalVars->curtime;
         // No more processing after 3 Seconds of Death
         if (g_GlobalVars->curtime - death_timer[ent->m_IDX] > 3.0f)

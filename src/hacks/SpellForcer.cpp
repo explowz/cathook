@@ -243,7 +243,7 @@ void Draw()
     // Check if there is a valid player exceeding our IDX
     for (int i = g_pLocalPlayer->entity_idx + 1; i <= g_GlobalVars->maxClients; ++i)
     {
-        if (g_pPlayerResource->isValid(i))
+        if (g_pPlayerResource->IsValid(i))
         {
             is_player_highest = false;
             players_above++;
