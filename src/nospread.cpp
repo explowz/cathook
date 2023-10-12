@@ -22,7 +22,6 @@
 
 #include "DetourHook.hpp"
 #include <regex>
-#include <boost/algorithm/string.hpp>
 #include "usercmd.hpp"
 #include "MiscTemporary.hpp"
 #include "AntiAim.hpp"
@@ -438,7 +437,16 @@ bool DispatchUserMessage(bf_read *buf, int type)
     buf->Seek(0);
 
     std::vector<std::string> lines;
-    boost::split(lines, msg_str, boost::is_any_of("\n"), boost::token_compress_on);
+    std::istringstream tokenStream(msg_str);
+    std::string line;
+
+    while (std::getline(tokenStream, line))
+    {
+        if (!line.empty())
+        {
+            lines.push_back(line);
+        }
+    }
 
     // Regex to find the playerperf data we want/need
     static std::regex primary_regex("^(([0-9]+\\.[0-9]+) ([0-9]{1,2}) ([0-9]{1,2}))$");

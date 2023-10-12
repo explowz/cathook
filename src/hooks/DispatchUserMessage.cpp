@@ -4,7 +4,6 @@
 */
 
 #include <chatlog.hpp>
-#include <boost/algorithm/string.hpp>
 #include <MiscTemporary.hpp>
 #include <hacks/AntiAim.hpp>
 #include <settings/Bool.hpp>
@@ -132,7 +131,7 @@ DEFINE_HOOKED_METHOD(DispatchUserMessage, bool, void *this_, int type, bf_read &
         if (*anti_votekick && buf.GetNumBytesLeft() > 35)
         {
             auto *server = (INetChannel *) g_IEngine->GetNetChannelInfo();
-            data                = std::string(buf_data);
+            data         = std::string(buf_data);
             logging::Info("%s", data.c_str());
             if (data.find("TeamChangeP") != std::string::npos && CE_GOOD(LOCAL_E))
             {
@@ -220,22 +219,32 @@ DEFINE_HOOKED_METHOD(DispatchUserMessage, bool, void *this_, int type, bf_read &
 
             std::vector<std::string> res = { "skid", "script", "cheat", "hak", "hac", "f1", "hax", "vac", "ban", "bot", "report", "kick", "hcak", "chaet", "one" };
             if (claz)
+            {
                 res.emplace_back(claz);
+            }
 
             SplitName(res, name1, 2);
             SplitName(res, name1, 3);
 
             std::string message2(message);
-            boost::to_lower(message2);
+            std::transform(message2.begin(), message2.end(), message2.begin(), [](unsigned char c) { return std::tolower(c); });
 
             const char *toreplace[]   = { " ", "4", "3", "0", "6", "5", "7", "@", ".", ",", "-" };
             const char *replacewith[] = { "", "a", "e", "o", "g", "s", "t", "a", "", "", "" };
 
             for (int i = 0; i < 7; i++)
-                boost::replace_all(message2, toreplace[i], replacewith[i]);
+            {
+                size_t pos = message2.find(toreplace[i]);
+                while (pos != std::string::npos)
+                {
+                    message2.replace(pos, std::strlen(toreplace[i]), replacewith[i]);
+                    pos = message2.find(toreplace[i], pos + std::strlen(replacewith[i]));
+                }
+            }
 
             for (const auto &filter : res)
-                if (boost::contains(message2, filter))
+            {
+                if (message2.contains(filter))
                 {
                     chat_stack::Say("\e" + clear, true);
                     retrun     = true;
@@ -244,9 +253,13 @@ DEFINE_HOOKED_METHOD(DispatchUserMessage, bool, void *this_, int type, bf_read &
                     gitgud.update();
                     break;
                 }
+            }
         }
+
         if (event.find("TF_Chat") == 0)
+        {
             hacks::ChatCommands::handleChatMessage(message, data[0]);
+        }
         chatlog::LogMessage(data[0], message);
         buf = bf_read(data.c_str(), data.size());
         buf.Seek(0);

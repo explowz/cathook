@@ -6,7 +6,6 @@
  */
 
 #include "common.hpp"
-#include <boost/algorithm/string.hpp>
 #include <settings/Bool.hpp>
 #include "CatBot.hpp"
 #include "votelogger.hpp"

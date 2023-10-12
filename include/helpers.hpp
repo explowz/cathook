@@ -56,6 +56,35 @@ template <typename Iter> Iter select_randomly(Iter start, Iter end)
     return select_randomly(start, end, gen);
 }
 
+std::vector<std::string> split(const std::string &s, char delimiter)
+{
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(s);
+    while (std::getline(tokenStream, token, delimiter))
+    {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+std::vector<std::string> split(const std::string &s, const std::string &delimiters)
+{
+    std::vector<std::string> tokens;
+    size_t pos_start = 0, pos_end;
+    const size_t delim_len = 1;
+    std::string token;
+
+    while ((pos_end = s.find_first_of(delimiters, pos_start)) != std::string::npos)
+    {
+        tokens.push_back(s.substr(pos_start, pos_end - pos_start));
+        pos_start = pos_end + delim_len;
+    }
+
+    tokens.push_back(s.substr(pos_start));
+    return tokens;
+}
+
 // TODO split this shit
 
 std::vector<ConVar *> &RegisteredVarsList();

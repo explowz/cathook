@@ -14,7 +14,6 @@
 /* For Textmode */
 #include <map>
 /* Splitting strings nicely */
-#include <boost/algorithm/string.hpp>
 #include <utility>
 
 /* Global switch for DataCenter hooks */
@@ -134,29 +133,35 @@ static void Refresh()
 
 static CatCommand force_refersh("dc_refresh", "Force refresh of ping data", Refresh);
 
-static void OnRegionsUpdate(std::string regions)
+static void OnRegionsUpdate(const std::string &regions)
 {
     CidStr_t region;
 
     regionsSet.clear();
 
-    std::vector<std::string> regions_vec;
-    boost::split(regions_vec, regions, boost::is_any_of(","));
+    std::vector<std::string> regions_vec = split(regions, ',');
     for (auto &region_str : regions_vec)
     {
         if (region_str.empty())
+        {
             continue;
+        }
+
         if (region_str.length() > 4)
         {
             logging::Info("Ignoring invalid region %s", region_str.c_str());
             continue;
         }
+
         region.fill(0);
         std::strcpy(region.data(), region_str.c_str());
         regionsSet.emplace(region);
     }
+
     if (*enable)
+    {
         Refresh();
+    }
 }
 
 static int (*o_GetDirectPingToPOP)(void *self, SteamNetworkingPOPID_decl cid);
@@ -195,8 +200,18 @@ static void Hook(bool on)
 void manageRegions(const std::vector<std::string> &regions_vec, bool add)
 {
     std::set<std::string> regions_split;
-    if ((*regions).length())
-        boost::split(regions_split, *regions, boost::is_any_of(","));
+    if (!(*regions).empty())
+    {
+        std::string::size_type start = 0;
+        std::string::size_type end   = (*regions).find(',');
+        while (end != std::string::npos)
+        {
+            regions_split.insert((*regions).substr(start, end - start));
+            start = end + 1;
+            end   = (*regions).find(',', start);
+        }
+        regions_split.insert((*regions).substr(start, end));
+    }
 
     std::set<std::string> new_regions = regions_split;
 
@@ -215,10 +230,13 @@ void manageRegions(const std::vector<std::string> &regions_vec, bool add)
         {
             auto position = new_regions.find(region);
             if (position != new_regions.end())
+            {
                 new_regions.erase(position);
+            }
         }
     }
-    regions = boost::join(new_regions, ",");
+
+    regions = std::accumulate(new_regions.begin(), new_regions.end(), std::string(), [](const std::string &a, const std::string &b) { return a.empty() ? b : a + ',' + b; });
 }
 
 static void Init()
@@ -237,7 +255,7 @@ static void Init()
             }
             Hook(on);
         });
-    regions.installChangeCallback([](settings::VariableBase<std::string> &, std::string regions) { OnRegionsUpdate(std::move(regions)); });
+    regions.installChangeCallback([](settings::VariableBase<std::string> &, const std::string &regions) { OnRegionsUpdate(regions); });
     restrict.installChangeCallback([](settings::VariableBase<bool> &, bool) { Refresh(); });
     enable_eu.installChangeCallback([](settings::VariableBase<bool> &, bool after) { manageRegions(eu_datacenters, after); });
     enable_north_america.installChangeCallback([](settings::VariableBase<bool> &, bool after) { manageRegions(north_america_datacenters, after); });

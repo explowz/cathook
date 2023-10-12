@@ -14,6 +14,160 @@
 // This is a temporary file to put code that needs moving/refactoring in.
 extern bool ignoreKeys;
 
+// Replacement for boost::circular_buffer
+template <typename T> class CCircularBuffer
+{
+public:
+    CCircularBuffer() : maxSize(0), currentIndex(0), count(0)
+    {
+    }
+
+    explicit CCircularBuffer(size_t size) : buffer(size), maxSize(size), currentIndex(0), count(0)
+    {
+    }
+
+    void resize(size_t newSize)
+    {
+        buffer.resize(newSize);
+        maxSize = newSize;
+
+        if (currentIndex >= newSize)
+        {
+            currentIndex = 0;
+        }
+
+        if (count > newSize)
+        {
+            count = newSize;
+        }
+    }
+
+    void push_back(const T &value)
+    {
+        if (count < maxSize)
+        {
+            ++count;
+        }
+
+        buffer[currentIndex] = value;
+        currentIndex         = (currentIndex + 1) % maxSize;
+    }
+
+    void push_front(const T &value)
+    {
+        if (count < maxSize)
+        {
+            ++count;
+        }
+
+        currentIndex         = (currentIndex - 1 + maxSize) % maxSize;
+        buffer[currentIndex] = value;
+    }
+
+    T &front()
+    {
+        if (count == 0)
+        {
+            throw std::out_of_range("Buffer is empty");
+        }
+
+        return buffer[(currentIndex - count + maxSize) % maxSize];
+    }
+
+    const T &front() const
+    {
+        if (count == 0)
+        {
+            throw std::out_of_range("Buffer is empty");
+        }
+
+        return buffer[(currentIndex - count + maxSize) % maxSize];
+    }
+
+    T &back()
+    {
+        if (count == 0)
+        {
+            throw std::out_of_range("Buffer is empty");
+        }
+
+        return buffer[(currentIndex - 1 + maxSize) % maxSize];
+    }
+
+    const T &back() const
+    {
+        if (count == 0)
+        {
+            throw std::out_of_range("Buffer is empty");
+        }
+
+        return buffer[(currentIndex - 1 + maxSize) % maxSize];
+    }
+
+    bool full() const
+    {
+        return count == maxSize;
+    }
+
+    size_t capacity() const
+    {
+        return maxSize;
+    }
+
+    void clear()
+    {
+        currentIndex = 0;
+        count        = 0;
+    }
+
+    T &operator[](size_t index)
+    {
+        return buffer[(currentIndex + index) % maxSize];
+    }
+
+    const T &operator[](size_t index) const
+    {
+        return buffer[(currentIndex + index) % maxSize];
+    }
+
+    T &at(size_t index)
+    {
+        if (index >= count)
+        {
+            throw std::out_of_range("Index out of range");
+        }
+
+        return buffer[(currentIndex + index) % maxSize];
+    }
+
+    const T &at(size_t index) const
+    {
+        if (index >= count)
+        {
+            throw std::out_of_range("Index out of range");
+        }
+
+        return buffer[(currentIndex + index) % maxSize];
+    }
+
+    void fill(const T &value)
+    {
+        std::fill(buffer.begin(), buffer.end(), value);
+        count = maxSize;
+    }
+
+    size_t size() const
+    {
+        return count;
+    }
+
+private:
+    std::vector<T> buffer;
+    size_t maxSize;
+    size_t currentIndex;
+    size_t count;
+};
+
 //-------------------------
 // Shared Sentry State
 //-------------------------

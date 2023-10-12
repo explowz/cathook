@@ -25,7 +25,6 @@
 #endif
 
 #include <memory>
-#include <boost/container_hash/hash.hpp>
 
 namespace navparser
 {
@@ -179,13 +178,24 @@ navPoints determinePoints(CNavArea *current, CNavArea *next)
 
 class Map : public micropather::Graph
 {
+private:
+    struct PairHash
+    {
+        template <class T1, class T2> std::size_t operator()(const std::pair<T1, T2> &p) const
+        {
+            auto hash1 = std::hash<T1>{}(p.first);
+            auto hash2 = std::hash<T2>{}(p.second);
+            return hash1 ^ hash2;
+        }
+    };
+
 public:
     CNavFile navfile;
     NavState state;
     micropather::MicroPather pather{ this, 3000, 6, true };
     std::string mapname;
-    std::unordered_map<std::pair<CNavArea *, CNavArea *>, CachedConnection, boost::hash<std::pair<CNavArea *, CNavArea *>>> vischeck_cache;
-    std::unordered_map<std::pair<CNavArea *, CNavArea *>, CachedStucktime, boost::hash<std::pair<CNavArea *, CNavArea *>>> connection_stuck_time;
+    std::unordered_map<std::pair<CNavArea *, CNavArea *>, CachedConnection, PairHash> vischeck_cache;
+    std::unordered_map<std::pair<CNavArea *, CNavArea *>, CachedStucktime, PairHash> connection_stuck_time;
     // This is a pure blacklist that does not get cleared and is for free usage internally and externally, e.g. blacklisting where enemies are standing
     // This blacklist only gets cleared on map change, and can be used time independently.
     // the enum is the Blacklist reason, so you can easily edit it

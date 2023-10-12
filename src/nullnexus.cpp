@@ -1,7 +1,6 @@
 #include "config.h"
 #if ENABLE_NULLNEXUS
 #include "libnullnexus/nullnexus.hpp"
-#include <boost/algorithm/string.hpp>
 #include "DetourHook.hpp"
 #include "nullnexus.hpp"
 #if ENABLE_VISUALS
@@ -140,7 +139,18 @@ bool ProcessPrint_detour_fn(void *baseclient, SVC_Print *msg)
     {
         auto msg_str = std::string(msg->m_szText);
         std::vector<std::string> lines;
-        boost::split(lines, msg_str, boost::is_any_of("\n"), boost::token_compress_on);
+
+        std::istringstream tokenStream(msg_str);
+        std::string line;
+
+        while (std::getline(tokenStream, line))
+        {
+            if (!line.empty())
+            {
+                lines.push_back(line);
+            }
+        }
+
         auto str = lines[0];
 
         if (str.rfind("steamid : ", 0) == 0)
@@ -190,9 +200,8 @@ void updateServer()
 
 void updateData()
 {
-    std::optional<std::string> username;
+    std::string username = *anon ? "anon" : g_ISteamFriends->GetPersonaName();
     std::optional<int> newcolour        = std::nullopt;
-    username                            = *anon ? "anon" : g_ISteamFriends->GetPersonaName();
 #if ENABLE_VISUALS
     if ((*colour).r || (*colour).g || (*colour).b)
     {
@@ -203,7 +212,7 @@ void updateData()
     }
 #endif
     NullNexus::UserSettings settings;
-    settings.username = *username;
+    settings.username = username;
     settings.colour   = newcolour;
     // Tell nullnexus about the current server we are connected to.
     updateServer(settings);
@@ -283,78 +292,80 @@ static InitRoutine init(
                 nexus.connect(*address, *port, *endpoint, true);
         }
 
-        // Search for the following string: /home/buildbot/buildslave/rel_hl2_client_linux/build/src/engine/baseclientstate.cpp
-        // How the function looked at the time that this signature was created (29.07.2023):
+    // Search for the following string: /home/buildbot/buildslave/rel_hl2_client_linux/build/src/engine/baseclientstate.cpp
+    // How the function looked at the time that this signature was created (29.07.2023):
 #pragma region Disassembled Function Using Ghidra
-        /*
-        undefined4 FUN_002bbf40(int param_1,int param_2)
-        {
-            int iVar1;
-            char cVar2;
-            int iVar3;
-            undefined4 local_3c;
-            undefined4 local_38;
-            undefined4 local_2c;
-            undefined4 local_28;
-            int local_24;
+    /*
+    undefined4 FUN_002bbf40(int param_1,int param_2)
+    {
+        int iVar1;
+        char cVar2;
+        int iVar3;
+        undefined4 local_3c;
+        undefined4 local_38;
+        undefined4 local_2c;
+        undefined4 local_28;
+        int local_24;
 
-            local_3c = 0;
-            local_38 = 0;
-            if (_exit == 0) {
-                local_24 = 0;
-                local_2c = 0;
-                local_28 = 0;
-                if (_DAT_00ae7030 != 0) goto LAB_002bc030;
-            }
-            else {
-                (**(code **)(_exit + 0x50))
-                    (_exit,&local_3c,0,0,0,0,
-                     "/home/buildbot/buildslave/rel_hl2_client_linux/build/src/engine/baseclientstate.cpp"
-                     ,0x52f,&DAT_008b4050,"(%s)%s","Unaccounted","ProcessSetPause");
-                local_24 = _exit;
-                local_2c = local_3c;
-                local_28 = local_38;
-                if (_DAT_00ae7030 != 0) {
-                LAB_002bc030:
-                    iVar1 = _DAT_00ae79dc;
-                    local_3c = local_2c;
-                    local_38 = local_28;
-                    *//* try { // try from 002bc036 to 002bc03a has its CatchHandler @ 002bc0f6 *//*
-                    iVar3 = ThreadGetCurrentId();
-                    if (iVar1 == iVar3) {
-                        if (*_DAT_00ae7038 != "ProcessSetPause") {
-                            *//* try { // try from 002bc0d8 to 002bc0e9 has its CatchHandler @ 002bc0f6 *//*
-                            _DAT_00ae7038 =
-                                (char **)CVProfNode::GetSubNode
-                                ((char *)_DAT_00ae7038,(int)"ProcessSetPause",&DAT_00000001,
-                                 (int)"Unaccounted");
-                        }
-                        CVProfNode::EnterScope();
-                        DAT_00ae7034 = '\0';
-                    }
-                    *(undefined *)(param_1 + 0x19c) = *(undefined *)(param_2 + 0x14);
-                    iVar1 = _DAT_00ae79dc;
-                    if (((DAT_00ae7034 == '\0') || (_DAT_00ae7030 != 0)) &&
-                        (iVar3 = ThreadGetCurrentId(), iVar1 == iVar3)) {
-                        cVar2 = CVProfNode::ExitScope();
-                        if (cVar2 != '\0') {
-                            _DAT_00ae7038 = (char **)_DAT_00ae7038[0x19];
-                        }
-                        DAT_00ae7034 = _DAT_00ae7038 == (char **)0xae703c;
-                    }
-                    goto LAB_002bbff0;
-                }
-            }
-            *(undefined *)(param_1 + 0x19c) = *(undefined *)(param_2 + 0x14);
-            local_3c = local_2c;
-            local_38 = local_28;
-        LAB_002bbff0:
-            if (local_24 != 0) {
-                (**(code **)(local_24 + 0x54))(local_24,local_2c,local_28,0,0,0);
-            }
-            return 1;
+        local_3c = 0;
+        local_38 = 0;
+        if (_exit == 0) {
+            local_24 = 0;
+            local_2c = 0;
+            local_28 = 0;
+            if (_DAT_00ae7030 != 0) goto LAB_002bc030;
         }
-        */
+        else {
+            (**(code **)(_exit + 0x50))
+                (_exit,&local_3c,0,0,0,0,
+                 "/home/buildbot/buildslave/rel_hl2_client_linux/build/src/engine/baseclientstate.cpp"
+                 ,0x52f,&DAT_008b4050,"(%s)%s","Unaccounted","ProcessSetPause");
+            local_24 = _exit;
+            local_2c = local_3c;
+            local_28 = local_38;
+            if (_DAT_00ae7030 != 0) {
+            LAB_002bc030:
+                iVar1 = _DAT_00ae79dc;
+                local_3c = local_2c;
+                local_38 = local_28;
+                */
+    /* try { // try from 002bc036 to 002bc03a has its CatchHandler @ 002bc0f6 */ /*
+   iVar3 = ThreadGetCurrentId();
+   if (iVar1 == iVar3) {
+       if (*_DAT_00ae7038 != "ProcessSetPause") {
+           */
+    /* try { // try from 002bc0d8 to 002bc0e9 has its CatchHandler @ 002bc0f6 */ /*
+   _DAT_00ae7038 =
+       (char **)CVProfNode::GetSubNode
+       ((char *)_DAT_00ae7038,(int)"ProcessSetPause",&DAT_00000001,
+        (int)"Unaccounted");
+}
+CVProfNode::EnterScope();
+DAT_00ae7034 = '\0';
+}
+*(undefined *)(param_1 + 0x19c) = *(undefined *)(param_2 + 0x14);
+iVar1 = _DAT_00ae79dc;
+if (((DAT_00ae7034 == '\0') || (_DAT_00ae7030 != 0)) &&
+(iVar3 = ThreadGetCurrentId(), iVar1 == iVar3)) {
+cVar2 = CVProfNode::ExitScope();
+if (cVar2 != '\0') {
+   _DAT_00ae7038 = (char **)_DAT_00ae7038[0x19];
+}
+DAT_00ae7034 = _DAT_00ae7038 == (char **)0xae703c;
+}
+goto LAB_002bbff0;
+}
+}
+*(undefined *)(param_1 + 0x19c) = *(undefined *)(param_2 + 0x14);
+local_3c = local_2c;
+local_38 = local_28;
+LAB_002bbff0:
+if (local_24 != 0) {
+(**(code **)(local_24 + 0x54))(local_24,local_2c,local_28,0,0,0);
+}
+return 1;
+}
+*/
 #pragma endregion
         uintptr_t processprint_addr = CSignature::GetEngineSignature("55 89 E5 57 56 53 83 EC 5C C7 45 ? 00 00 00 00 A1 ? ? ? ? C7 45 ? 00 00 00 00 8B 5D ? 8B 75 ? 85 C0 0F 84 ? ? ? ? 8D 55 ? 89 04 24 89 54 24 ? C7 44 24 ? ? ? ? ? C7 44 24 ? ? ? ? ? C7 44 24 ? ? ? ? ? C7 44 24 ? ? ? ? ? C7 44 24 ? 2F 05 00 00");
 

@@ -5,7 +5,6 @@
 #include "common.hpp"
 #include "DetourHook.hpp"
 #include "PlayerTools.hpp"
-#include <boost/algorithm/string.hpp>
 #include <regex>
 #include <locale>
 #include <codecvt>
@@ -29,17 +28,12 @@ void DrawText_hook(int *_this, int x, int y, vgui::HFont hFont, Color clr, const
         std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
         std::string normal_string = converter.to_bytes(szText);
 
-        std::vector<std::string> names_array;
-
-        // Since we have no access to boost's regex split, we need to replace our sequence
-        // With a single character.
-        // Luckily names can never have a % in them, so i will use that as the delimeter.
-
+        // Luckily names can never have a % in them, so I will use that as the delimiter.
         static std::regex r("( \\+ |, )");
         normal_string = std::regex_replace(normal_string, r, "%");
 
         // Split at assists
-        boost::algorithm::split(names_array, normal_string, boost::is_any_of("%"));
+        std::vector<std::string> names_array = split(normal_string, '%');
 
         // Sort all player names by priority
         static int last_sort_tickcount = 0;

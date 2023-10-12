@@ -1,6 +1,6 @@
 #include "common.hpp"
 #include "playerlist.hpp"
-#include <boost/format.hpp>
+#include <iomanip>
 #include <random>
 
 namespace hacks::miscplayerinfo
@@ -59,7 +59,7 @@ void Paint()
 {
     if (!*draw_kda && !*mafia_city)
         return;
-    for (const auto &ent: entity_cache::player_cache)
+    for (const auto &ent : entity_cache::player_cache)
     {
         if (RAW_ENT(ent)->IsDormant())
             continue;
@@ -106,7 +106,10 @@ void Paint()
             {
                 if (draw::WorldToScreen(draw_at_kd, out_kd))
                 {
-                    std::string to_use = format("KD: ", boost::format("%.2f") % KDA, " (", kills, "/", deaths, ")");
+                    std::ostringstream ss;
+                    ss << "KD: " << std::fixed << std::setprecision(2) << KDA << " (" << kills << "/" << deaths << ")";
+
+                    std::string to_use = ss.str();
                     float w, h;
                     fonts::center_screen->stringSize(to_use, &w, &h);
                     // Center the string

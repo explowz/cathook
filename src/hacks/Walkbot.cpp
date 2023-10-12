@@ -8,7 +8,6 @@
 #include "common.hpp"
 #include "hack.hpp"
 
-#include <boost/algorithm/string.hpp>
 #include <sys/dir.h>
 #include <sys/stat.h>
 #include <hacks/hacklist.hpp>
@@ -1158,7 +1157,7 @@ static void cm()
             if (nodes.empty() || g_IEngine->GetLevelName() != prevlvlname)
             {
                 prevlvlname = g_IEngine->GetLevelName();
-                if (!boost::contains(prevlvlname, "pl_"))
+                if (strstr(prevlvlname, "pl_") == nullptr)
                 {
                     Load("default");
                     if (leave_if_empty && nodes.empty() && quit_timer.test_and_set(5000))
@@ -1170,31 +1169,17 @@ static void cm()
                 }
             }
         }
-        /*prevlvlname = g_IEngine->GetLevelName();
-        std::string prvlvlname(prevlvlname);
-        if (boost::contains(prvlvlname, "pl_") || boost::contains(prvlvlname, "cp_"))
-        {
-            logging::Info("1");
-            bool ret = false;
-            if (lagexploit::pointarr[0] || lagexploit::pointarr[1] ||
-                lagexploit::pointarr[2] || lagexploit::pointarr[3] ||
-                lagexploit::pointarr[4])
-            {
-                hacks::followbot::followbot  = 1;
-                hacks::followbot::roambot    = 1;
-                hacks::followbot::followcart = true;
-            }
-            else
-            {
-                hacks::followbot::followbot  = 0;
-                hacks::followbot::roambot    = 0;
-                hacks::followbot::followcart = false;
-            }
-        }*/
+
         if (nodes.empty())
+        {
             return;
+        }
+
         if (force_slot)
+        {
             UpdateSlot();
+        }
+
         UpdateWalker();
     }
     break;

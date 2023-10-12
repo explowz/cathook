@@ -9,17 +9,22 @@
 #include <cstdio>
 #include <cstring>
 #include <dlfcn.h>
-#include <boost/stacktrace.hpp>
+#include <iostream>
+#include <fstream>
+#include <csignal>
+#include <execinfo.h>
+#include <dlfcn.h>
+#include <cstring>
+#include <unistd.h>
+#include <pwd.h>
 #include <visual/SDLHooks.hpp>
 
 #ifdef __RDSEED__ // Used for InitRandom()
 #include <x86intrin.h>
 #else /* __RDSEED__ */
 #include <random>
-#include <fstream>
 #include <chrono>
 #include <sys/types.h>
-#include <unistd.h>
 #endif /* __RDSEED__ */
 
 #include "hack.hpp"
@@ -27,8 +32,6 @@
 #if ENABLE_GUI
 #include "menu/GuiInterface.hpp"
 #endif
-#include <pwd.h>
-#include <iostream>
 
 #include "teamroundtimer.hpp"
 #if EXTERNAL_DRAWING
@@ -121,12 +124,16 @@ void critical_error_handler(int signum)
         std::abort();
     }
 
-    for (auto i : boost::stacktrace::stacktrace())
+    const int max_frames = 128;
+    void *frame[max_frames];
+    int frames = backtrace(frame, max_frames);
+
+    for (int i = 0; i < frames; ++i)
     {
         Dl_info info2;
-        if (dladdr(i.address(), &info2))
+        if (dladdr(frame[i], &info2))
         {
-            uintptr_t offset = reinterpret_cast<uintptr_t>(i.address()) - reinterpret_cast<uintptr_t>(info2.dli_fbase);
+            uintptr_t offset = reinterpret_cast<uintptr_t>(frame[i]) - reinterpret_cast<uintptr_t>(info2.dli_fbase);
             out << (!strcmp(info2.dli_fname, info.dli_fname) ? "cathook" : info2.dli_fname) << '\t' << reinterpret_cast<void *>(offset) << std::endl;
         }
     }

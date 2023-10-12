@@ -17,9 +17,7 @@
 
 // Codeowners: aUniqueUser
 
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/classification.hpp>
-#include <utility>
+#include "helpers.hpp"
 #include "common.hpp"
 
 namespace hacks::autoitem
@@ -69,7 +67,9 @@ bool checkAchMgr()
     {
         g_IAchievementMgr = g_IEngine->GetAchievementMgr();
         if (!g_IAchievementMgr)
+        {
             return false;
+        }
     }
     return true;
 }
@@ -160,7 +160,7 @@ static bool equipItem(int clazz, int slot, int id, bool get = true, bool allowRe
 
 static bool use_fallback       = false;
 static int first_item_attempts = 0;
-void getAndEquipWeapon(std::string str, int clazz, int slot)
+void getAndEquipWeapon(const std::string &str, int clazz, int slot)
 {
     auto invmng = re::CTFInventoryManager::GTFInventoryManager();
     auto inv    = invmng->GTFPlayerInventory();
@@ -180,7 +180,8 @@ void getAndEquipWeapon(std::string str, int clazz, int slot)
         {
             if (str.find('/') != std::string::npos)
             {
-                boost::split(ids_split_str, str, boost::is_any_of("/"));
+                ids_split_str = split(str, '/');
+
                 for (auto &id : ids_split_str)
                 {
                     ids_split.emplace_back(std::stoi(id));
@@ -188,7 +189,9 @@ void getAndEquipWeapon(std::string str, int clazz, int slot)
                 use_fallback = true;
             }
             else
+            {
                 ids_split.emplace_back(std::stoi(str));
+            }
         }
         catch (std::invalid_argument &e)
         {
@@ -202,7 +205,9 @@ void getAndEquipWeapon(std::string str, int clazz, int slot)
         if (use_fallback)
         {
             if (!item_view && first_item_attempts >= 3)
+            {
                 equipItem(clazz, slot, ids_split.at(1), true, true);
+            }
             else
             {
                 equipItem(clazz, slot, ids_split.at(0), true, true);
@@ -245,12 +250,14 @@ void getAndEquipWeapon(std::string str, int clazz, int slot)
                 ids_rec.clear();
                 ids_rec_str.clear();
 
-                // Last group should be the just the result, skip it
+                // Last group should be just the result, skip it
                 if (group_str == std::to_string(result))
+                {
                     continue;
+                }
 
                 // Split this crafting group into IDs
-                boost::split(ids_rec_str, group_str, boost::is_any_of(","));
+                ids_rec_str = split(group_str, ',');
 
                 try
                 {
@@ -270,7 +277,7 @@ void getAndEquipWeapon(std::string str, int clazz, int slot)
                 size_t rec_req_amount_have = 0;
                 for (auto &id : ids_rec)
                 {
-                    // For now we should just assume the user has
+                    // For now, we should just assume the user has
                     // provided a way for getting needed scrap
                     if (id == 5000 || id == 5001 || id == 5002)
                     {
@@ -281,14 +288,20 @@ void getAndEquipWeapon(std::string str, int clazz, int slot)
                     // In this loop id is a item id of 1 part of the crafting group
                     auto item_view = inv->GetFirstItemOfItemDef(id);
                     if (item_view)
+                    {
                         rec_req_amount_have++;
+                    }
                     else
                     {
                         auto index = isAchItem(id);
+
                         if (index)
                         {
                             if (!checkAchMgr())
+                            {
                                 return;
+                            }
+
                             if (g_IAchievementMgr->HasAchieved(index->name.c_str()))
                             {
                                 Debug("Cant get specified ach item %i because it has already been unlocked! moving to next item.", id);
@@ -296,6 +309,7 @@ void getAndEquipWeapon(std::string str, int clazz, int slot)
                                 rec_req_amount_have++;
                                 continue;
                             }
+
                             Debug("Getting ach item %i, required for this craft.", id);
                             getItem(id, false);
                             return;
@@ -327,7 +341,9 @@ static Timer t{};
 static void CreateMove()
 {
     if (!enable || CE_BAD(LOCAL_E) || !t.test_and_set(*interval))
+    {
         return;
+    }
 
     int clazz   = g_pLocalPlayer->clazz;
     auto invmng = re::CTFInventoryManager::GTFInventoryManager();
@@ -342,6 +358,7 @@ static void CreateMove()
             getAndEquipWeapon(*secondary, clazz, 1);
             getAndEquipWeapon(*melee, clazz, 2);
         }
+
         if (hats)
         {
             static int offset         = 0;
@@ -352,10 +369,16 @@ static void CreateMove()
             equipItem(clazz, slots[(offset + 2) % 3], *hat3);
             offset = (offset + 1) % 3;
         }
+
         if (autoNoisemaker && inv->GetFirstItemOfItemDef(noisemaker_id))
+        {
             equipItem(clazz, 9, noisemaker_id, false, false);
-        else // Unequip the noisemaker if we're not using it
+        }
+        // Unequip the noisemaker if we're not using it
+        else
+        {
             equipItem(clazz, 9, unequip_id, false, false);
+        }
     }
 }
 
@@ -447,18 +470,18 @@ CatCommand rent_item("rent_item", "testrun a item by ID",
 CatCommand lock("achievement_lock", "Lock all achievements", Lock);
 CatCommand unlock("achievement_unlock", "Unlock all achievements", Unlock);
 
-void rvarCallback(std::string after, int idx)
+void rvarCallback(const std::string &after, int idx)
 {
     craft_groups[idx].clear();
-    boost::split(craft_groups[idx], after, boost::is_any_of(";-"));
+    craft_groups[idx] = split(after, ";-");
 }
 
 static InitRoutine init(
     []()
     {
-        primary.installChangeCallback([](settings::VariableBase<std::string> &, std::string after) { rvarCallback(std::move(after), 0); });
-        secondary.installChangeCallback([](settings::VariableBase<std::string> &, std::string after) { rvarCallback(std::move(after), 1); });
-        melee.installChangeCallback([](settings::VariableBase<std::string> &, std::string after) { rvarCallback(std::move(after), 2); });
+        primary.installChangeCallback([](settings::VariableBase<std::string> &, const std::string &after) { rvarCallback(after, 0); });
+        secondary.installChangeCallback([](settings::VariableBase<std::string> &, const std::string &after) { rvarCallback(after, 1); });
+        melee.installChangeCallback([](settings::VariableBase<std::string> &, const std::string &after) { rvarCallback(after, 2); });
 
         EC::Register(EC::CreateMove, CreateMove, "autoitem_cm");
 

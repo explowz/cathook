@@ -10,7 +10,6 @@
 
 #include <cstdint>
 #include <dirent.h>
-#include <boost/algorithm/string.hpp>
 
 namespace playerlist
 {
@@ -313,7 +312,7 @@ CatCommand pl_set_state("pl_set_state", "cat_pl_set_state [playername] [state] (
                                 return;
                             }
                             std::string state = args.Arg(2);
-                            boost::to_upper(state);
+                            std::transform(state.begin(), state.end(), state.begin(), [](unsigned char c) { return std::toupper(c); });
                             player_info_s info{};
                             GetPlayerInfo(id, &info);
 
@@ -368,29 +367,36 @@ static int cat_pl_set_state_completionCallback(const char *c_partial, char comma
             name.begin(), name.end(), [](char x) { return !isprint(x); }, '*');
         names.push_back(name);
     }
+
     std::sort(names.begin(), names.end());
 
     if (parts[0].empty() || (parts[1].empty() && (!parts[0].empty() && partial.back() != ' ')))
     {
-        boost::to_lower(parts[0]);
-        for (const auto &s : names)
+        std::transform(parts[0].begin(), parts[0].end(), parts[0].begin(), [](unsigned char c) { return std::tolower(c); });
+        for (const auto &name : names)
         {
-            // if (s.find(parts[0]) == 0)
-            if (boost::to_lower_copy(s).find(parts[0]) == 0)
+            std::string lowercaseName;
+            std::transform(name.begin(), name.end(), std::back_inserter(lowercaseName), [](unsigned char c) { return std::tolower(c); });
+            if (lowercaseName.find(parts[0]) == 0)
             {
-                snprintf(commands[count++], COMMAND_COMPLETION_ITEM_LENGTH - 1, "cat_pl_set_state %s", s.c_str());
+                snprintf(commands[count++], COMMAND_COMPLETION_ITEM_LENGTH - 1, "cat_pl_set_state %s", name.c_str());
             }
         }
         return count;
     }
-    boost::to_lower(parts[1]);
-    for (const auto &s : k_Names)
+
+    std::transform(parts[1].begin(), parts[1].end(), parts[1].begin(), [](unsigned char c) { return std::tolower(c); });
+    for (const auto &name : k_Names)
     {
-        if (boost::to_lower_copy(s).find(parts[1]) == 0)
+        std::string lowercaseName;
+        std::transform(name.begin(), name.end(), std::back_inserter(lowercaseName), [](unsigned char c) { return std::tolower(c); });
+        if (lowercaseName.find(parts[1]) == 0)
         {
-            snprintf(commands[count++], COMMAND_COMPLETION_ITEM_LENGTH - 1, "cat_pl_set_state %s %s", parts[0].c_str(), s.c_str());
+            snprintf(commands[count++], COMMAND_COMPLETION_ITEM_LENGTH - 1, "cat_pl_set_state %s %s", parts[0].c_str(), name.c_str());
             if (count == COMMAND_COMPLETION_MAXITEMS)
+            {
                 break;
+            }
         }
     }
     return count;

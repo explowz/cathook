@@ -6,7 +6,7 @@
  */
 #include "common.hpp"
 #include <settings/Bool.hpp>
-#include <boost/circular_buffer.hpp>
+#include "MiscTemporary.hpp"
 
 namespace hacks::aimbot
 {
@@ -52,7 +52,7 @@ struct StrafePredictionData
 };
 
 // StrafePredictionData strafepred_data;
-static std::array<boost::circular_buffer<Vector>, MAX_PLAYERS> previous_positions;
+static std::array<CCircularBuffer<Vector>, MAX_PLAYERS> previous_positions;
 static ConVar *sv_gravity = nullptr;
 
 // Function for calculating the center and radius of a circle that is supposed to represent a players starfing pattern
@@ -702,8 +702,8 @@ float DistanceToGround(Vector origin)
 static InitRoutine init(
     []()
     {
-        previous_positions.fill(boost::circular_buffer<Vector>(*sample_size));
-        sample_size.installChangeCallback([](settings::VariableBase<int> &, int after) { previous_positions.fill(boost::circular_buffer<Vector>(after)); });
+        previous_positions.fill(CCircularBuffer<Vector>(*sample_size));
+        sample_size.installChangeCallback([](settings::VariableBase<int> &, int after) { previous_positions.fill(CCircularBuffer<Vector>(after)); });
         EC::Register(
             EC::CreateMove,
             []()
