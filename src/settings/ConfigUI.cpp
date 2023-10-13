@@ -3,6 +3,7 @@
  */
 #include <settings/SettingsIO.hpp>
 #include <settings/String.hpp>
+#include <sys/dir.h>
 #include "common.hpp"
 #if ENABLE_VISUALS
 #include "Menu.hpp"
@@ -28,7 +29,7 @@ void refreshConfigList()
 
 void Draw()
 {
-    if (*cfg_save != "")
+    if (!(*cfg_save).empty())
     {
         settings::SettingsWriter writer{ settings::Manager::instance() };
 
@@ -49,14 +50,16 @@ void Draw()
 
         cfg_save = "";
     }
-    if (*cfg_load != "")
+
+    if (!(*cfg_load).empty())
     {
         settings::SettingsReader loader{ settings::Manager::instance() };
         loader.loadFrom(paths::getConfigPath() + "/" + *cfg_load + ".conf");
 
         cfg_load = "";
     }
-    if (*cfg_delete != "")
+
+    if (!(*cfg_delete).empty())
     {
         remove((paths::getConfigPath() + "/" + *cfg_delete + ".conf").c_str());
         refreshConfigList();
