@@ -230,7 +230,7 @@ static void cm()
     // Didn't change name - update timer a bit
     if (!strcmp(LOCAL_E->player_info->name, new_name.c_str()))
     {
-        set_name.last -= std::chrono::seconds(170);
+        set_name -= Timer::sec_to_ms(170);
         return;
     }
     has_changed = true;

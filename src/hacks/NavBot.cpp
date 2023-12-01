@@ -854,7 +854,7 @@ bool stayNear()
                 }
             }
             // Else Check our origin for validity (Only for ranged classes)
-            else if (selected_config.prefer_far && isAreaValidForStayNear(*ent_origin, navparser::NavEngine::findClosestNavSquare(LOCAL_E->m_vecOrigin())))
+            else if (selected_config.prefer_far && isAreaValidForStayNear(*ent_origin, navparser::NavEngine::findClosestNavSquare(g_pLocalPlayer->v_Origin)))
                 return true;
         }
         // Else we try to path again
@@ -892,7 +892,7 @@ bool stayNear()
         }
     }
     // Stay near failed to find any good targets, add extra delay
-    staynear_cooldown.last += std::chrono::seconds(3);
+    staynear_cooldown += Timer::sec_to_ms(3);
     return false;
 }
 
@@ -1657,7 +1657,7 @@ static void CreateMove()
 void LevelInit()
 {
     // Make it run asap
-    refresh_sniperspots_timer.last -= std::chrono::seconds(60);
+    refresh_sniperspots_timer -= Timer::sec_to_ms(60);
     sniper_spots.clear();
 }
 

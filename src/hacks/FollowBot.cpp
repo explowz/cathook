@@ -548,7 +548,7 @@ static void cm()
     // check if target is afk
     if (afk)
     {
-        if (afkTicks[follow_target].check(int(afktime)))
+        if (afkTicks[follow_target].check(*afktime))
         {
             follow_target = 0;
             return;

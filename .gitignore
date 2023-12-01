@@ -268,8 +268,7 @@ Data Folder
 .vscode/settings.json
 
 .idea
-cmake-build-debug
-cmake-build-release
+cmake-build-*
 libcathook.so
 build
 # idk where it comes from
