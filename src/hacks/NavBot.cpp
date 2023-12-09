@@ -901,10 +901,9 @@ bool isVisible;
 bool meleeAttack(int slot, std::pair<CachedEntity *, float> &nearest)
 {
     // There is no point in engaging the melee AI if we are not using melee
-    if (slot != melee || !nearest.first)
+    if (nearest.first && IsPlayerInvulnerable(nearest.first))
     {
-        if (navparser::NavEngine::current_priority == prio_melee)
-            navparser::NavEngine::cancelPath();
+        // If the nearest enemy is invulnerable, don't engage or follow
         return false;
     }
 
